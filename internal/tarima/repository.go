@@ -9,5 +9,7 @@ type TarimaRepository interface {
 	CountToday(ctx context.Context) (int, error)
 	Create(ctx context.Context, t *Tarima) (int64, error)
 	GetByID(ctx context.Context, id int64) (*Tarima, error)
+	GetByIDRaw(ctx context.Context, id int64) (*Tarima, error)
 	Update(ctx context.Context, t *Tarima) error
+	Delete(ctx context.Context, id int64) (*Tarima, error)
 }
