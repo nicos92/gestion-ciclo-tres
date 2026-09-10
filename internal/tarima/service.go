@@ -37,6 +37,10 @@ func (s *TarimaService) CountToday(ctx context.Context) (int, error) {
 	return s.repo.CountToday(ctx)
 }
 
+func (s *TarimaService) CountAll(ctx context.Context) (int, error) {
+	return s.repo.CountAll(ctx)
+}
+
 func (s *TarimaService) Create(ctx context.Context, t *Tarima) (int64, error) {
 	trimTarima(t)
 
