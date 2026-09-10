@@ -14,9 +14,9 @@ function togglePassword(fieldId, iconId) {
 }
 
 function checkPasswordMatch() {
-    var password = document.getElementById('password').value;
+    var password = document.getElementById('password') || document.getElementById('newPassword');
     var confirmPassword = document.getElementById('confirmPassword');
-    if (!confirmPassword) return;
+    if (!password || !confirmPassword) return;
 
     var val = confirmPassword.value;
     var messageDiv = document.getElementById('passwordMatchMessage');
@@ -26,7 +26,7 @@ function checkPasswordMatch() {
     if (!messageDiv || !messageText || !passwordDivMessage) return;
 
     if (val.length > 0) {
-        if (password === val) {
+        if (password.value === val) {
             passwordDivMessage.className = 'mb-0 p-2 alert alert-success';
             messageText.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i>Las contraseñas coinciden';
             messageDiv.className = 'mb-0 p-0 alert alert-success';
@@ -74,8 +74,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     var password = document.getElementById('password');
+    var newPassword = document.getElementById('newPassword');
     var confirmPassword = document.getElementById('confirmPassword');
     if (password) password.addEventListener('input', checkPasswordMatch);
+    if (newPassword) newPassword.addEventListener('input', checkPasswordMatch);
     if (confirmPassword) confirmPassword.addEventListener('input', checkPasswordMatch);
 });
 
