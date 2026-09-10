@@ -2,6 +2,8 @@ package tarima
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"testing"
 )
 
@@ -11,6 +13,15 @@ type mockRepo struct {
 	filteredCalled bool
 	limit          int
 	filters        FiltrosTarima
+	createCalled   bool
+	getByIDCalled  bool
+	updateCalled   bool
+	createID       int64
+	tarimas        []Tarima
+	singleTarima   *Tarima
+	createErr      error
+	getErr         error
+	updateErr      error
 }
 
 func (m *mockRepo) ListToday(_ context.Context, limit int) ([]Tarima, error) {
@@ -34,6 +45,30 @@ func (m *mockRepo) ListFiltered(_ context.Context, filters FiltrosTarima, limit 
 
 func (m *mockRepo) CountToday(_ context.Context) (int, error) {
 	return 5, nil
+}
+
+func (m *mockRepo) Create(_ context.Context, t *Tarima) (int64, error) {
+	m.createCalled = true
+	if m.createErr != nil {
+		return 0, m.createErr
+	}
+	return m.createID, nil
+}
+
+func (m *mockRepo) GetByID(_ context.Context, id int64) (*Tarima, error) {
+	m.getByIDCalled = true
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.singleTarima != nil {
+		return m.singleTarima, nil
+	}
+	return &Tarima{ID: id, CodigoBarras: "08801970009998010100450450000025-123456"}, nil
+}
+
+func (m *mockRepo) Update(_ context.Context, t *Tarima) error {
+	m.updateCalled = true
+	return m.updateErr
 }
 
 func TestList_DefaultToday(t *testing.T) {
@@ -165,5 +200,139 @@ func TestHasFilters(t *testing.T) {
 				t.Errorf("HasFilters() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCreate_Success(t *testing.T) {
+	repo := &mockRepo{createID: 10}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		CodigoBarras:   "08801970009998010104525-123456",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+
+	id, err := svc.Create(context.Background(), tarima)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if !repo.createCalled {
+		t.Error("expected repo.Create to be called")
+	}
+	if id != 10 {
+		t.Errorf("id = %d, want 10", id)
+	}
+}
+
+func TestCreate_CamposRequeridos(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroVenta:    "25-123456",
+	}
+	_, err := svc.Create(context.Background(), tarima)
+	if err != ErrCodigoBarrasRequerido {
+		t.Errorf("got %v, want ErrCodigoBarrasRequerido", err)
+	}
+}
+
+func TestCreate_Duplicado(t *testing.T) {
+	repo := &mockRepo{createErr: fmt.Errorf("UNIQUE constraint failed: tarimas.codigo_barras")}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		CodigoBarras:   "08801970009998010104525-123456",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	_, err := svc.Create(context.Background(), tarima)
+	if err != ErrCodigoBarrasDuplicado {
+		t.Errorf("got %v, want ErrCodigoBarrasDuplicado", err)
+	}
+}
+
+func TestGetByID_Success(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	tarima, err := svc.GetByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if !repo.getByIDCalled {
+		t.Error("expected repo.GetByID to be called")
+	}
+	if tarima == nil {
+		t.Fatal("expected non-nil tarima")
+	}
+	if tarima.ID != 1 {
+		t.Errorf("ID = %d, want 1", tarima.ID)
+	}
+}
+
+func TestGetByID_NotFound(t *testing.T) {
+	repo := &mockRepo{getErr: sql.ErrNoRows}
+	svc := NewTarimaService(repo)
+
+	_, err := svc.GetByID(context.Background(), 999)
+	if err != ErrTarimaNoEncontrada {
+		t.Errorf("got %v, want ErrTarimaNoEncontrada", err)
+	}
+}
+
+func TestUpdate_Success(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		ID:             1,
+		CodigoBarras:   "08801970009998010104525-123456",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	err := svc.Update(context.Background(), tarima)
+	if err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+	if !repo.updateCalled {
+		t.Error("expected repo.Update to be called")
+	}
+}
+
+func TestUpdate_Duplicado(t *testing.T) {
+	repo := &mockRepo{updateErr: fmt.Errorf("UNIQUE constraint failed: tarimas.codigo_barras")}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		ID:             1,
+		CodigoBarras:   "08801970009998010104525-123456",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	err := svc.Update(context.Background(), tarima)
+	if err != ErrCodigoBarrasDuplicado {
+		t.Errorf("got %v, want ErrCodigoBarrasDuplicado", err)
 	}
 }
