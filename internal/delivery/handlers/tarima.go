@@ -226,6 +226,26 @@ func (h *TarimaHandler) ActualizarTarima(w http.ResponseWriter, r *http.Request)
 	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 }
 
+func (h *TarimaHandler) EliminarTarima(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "", http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.tarima.Delete(r.Context(), id)
+	if err != nil {
+		if err == tarima.ErrTarimaNoEncontrada {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middleware.SessionData, errKey, fallbackErr string, editMode bool) {
 	key := errKey
 	if key == "" {
