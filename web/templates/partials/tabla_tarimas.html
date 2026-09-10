@@ -58,12 +58,18 @@
                     <td>{{formatDate .FechaRegistro}}</td>
                     <td>{{if .Descripcion}}{{.Descripcion}}{{else}}&nbsp;{{end}}</td>
                     {{if and $.Session (ge $.Session.Nivel 2)}}
-                    <td>
+                    <td class="text-nowrap">
+                        <a href="/tarimas/editar/{{.ID}}" class="btn btn-outline-warning btn-sm me-1"
+                           title="Editar tarima">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {{if and $.Session (ge $.Session.Nivel 3)}}
                         <button type="button" class="btn btn-danger btn-sm"
                             onclick="confirmarEliminar({{.ID}})"
                             title="Eliminar tarima">
                             <i class="fas fa-trash"></i>
                         </button>
+                        {{end}}
                     </td>
                     {{end}}
                 </tr>
@@ -90,11 +96,17 @@
                                 <span class="badge bg-primary">Tarima: {{.NumeroTarima}}</span>
                             </h5>
                             {{if and $.Session (ge $.Session.Nivel 2)}}
+                            <a href="/tarimas/editar/{{.ID}}" class="btn btn-outline-warning btn-sm me-1"
+                               title="Editar tarima">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {{if and $.Session (ge $.Session.Nivel 3)}}
                             <button type="button" class="btn btn-danger btn-sm"
                                 onclick="confirmarEliminar({{.ID}})"
                                 title="Eliminar tarima">
                                 <i class="fas fa-trash"></i>
                             </button>
+                            {{end}}
                             {{end}}
                         </div>
                         <div class="card-text">
