@@ -40,12 +40,13 @@
                     <th>Nombre</th>
                     <th>Fecha</th>
                     <th>Descripción</th>
+                    {{if and $.Session (ge $.Session.Nivel 2)}}<th>Acciones</th>{{end}}
                 </tr>
             </thead>
             <tbody>
                 {{if .Tarimas}}
                 {{range .Tarimas}}
-                <tr>
+                <tr id="tarima-{{.ID}}">
                     <td>{{.NumeroProducto}}</td>
                     <td>{{.NumeroTarima}}</td>
                     <td>{{.NumeroUsuario}}</td>
@@ -56,11 +57,20 @@
                     <td>{{if .NombreUsuario}}{{.NombreUsuario}}{{else}}N/A{{end}}</td>
                     <td>{{formatDate .FechaRegistro}}</td>
                     <td>{{if .Descripcion}}{{.Descripcion}}{{else}}&nbsp;{{end}}</td>
+                    {{if and $.Session (ge $.Session.Nivel 2)}}
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm"
+                            onclick="confirmarEliminar({{.ID}})"
+                            title="Eliminar tarima">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                    {{end}}
                 </tr>
                 {{end}}
                 {{else}}
                 <tr>
-                    <td colspan="10" class="text-center text-muted">No hay tarimas registradas aún.</td>
+                    <td colspan="11" class="text-center text-muted">No hay tarimas registradas aún.</td>
                 </tr>
                 {{end}}
             </tbody>
@@ -79,6 +89,13 @@
                             <h5 class="card-title">
                                 <span class="badge bg-primary">Tarima: {{.NumeroTarima}}</span>
                             </h5>
+                            {{if and $.Session (ge $.Session.Nivel 2)}}
+                            <button type="button" class="btn btn-danger btn-sm"
+                                onclick="confirmarEliminar({{.ID}})"
+                                title="Eliminar tarima">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {{end}}
                         </div>
                         <div class="card-text">
                             <p class="mb-1"><strong>Producto:</strong> {{.NumeroProducto}}</p>
