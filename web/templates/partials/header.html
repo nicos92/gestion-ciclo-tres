@@ -15,6 +15,17 @@
         </div>
     </div>
 </header>
+<nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.15);">
+    <div class="container">
+        <div class="navbar-nav">
+            <a class="nav-link" href="/dashboard"><i class="fas fa-home me-1"></i>Panel</a>
+            <a class="nav-link" href="/tarimas"><i class="fas fa-boxes me-1"></i>Tarimas</a>
+            {{if ge .Session.Nivel 4}}
+            <a class="nav-link" href="/usuarios"><i class="fas fa-users me-1"></i>Usuarios</a>
+            {{end}}
+        </div>
+    </div>
+</nav>
 {{else}}
 <header class="form-header">
     <div class="container">
