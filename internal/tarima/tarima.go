@@ -71,6 +71,15 @@ func ValidateTarima(t *Tarima) error {
 	if t.CodigoBarras == "" {
 		return ErrCodigoBarrasRequerido
 	}
+	if len(t.CodigoBarras) != 30 {
+		return ErrBarcodeLongitud
+	}
+	if t.CodigoBarras[0] != '0' {
+		return ErrBarcodePrefix
+	}
+	if t.CodigoBarras[13:17] != "9998" {
+		return ErrBarcodeMarker
+	}
 	if t.NumeroTarima == "" {
 		return ErrNumeroTarimaRequerido
 	}
