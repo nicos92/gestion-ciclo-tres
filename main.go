@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"strconv"
 	"syscall"
 	"time"
 
@@ -20,6 +19,7 @@ import (
 	"gestion-ciclo-tres/internal/delivery/render"
 	"gestion-ciclo-tres/internal/identity"
 	"gestion-ciclo-tres/internal/infrastructure/sqlite"
+	"gestion-ciclo-tres/internal/tarima"
 )
 
 //go:embed migrations/*.sql
@@ -79,9 +79,13 @@ func main() {
 	authSvc := identity.NewAuthService(userRepo)
 	authHandler := handlers.NewAuthHandler(renderer, authSvc, store)
 
+	tarimaRepo := sqlite.NewTarimaRepository(db)
+	tarimaSvc := tarima.NewTarimaService(tarimaRepo)
+	tarimaHandler := handlers.NewTarimaHandler(renderer, tarimaSvc, store)
+
 	srv := &http.Server{
 		Addr:              cfg.Port,
-		Handler:           routes(db, store, authHandler, cfg.AppName),
+		Handler:           routes(db, store, authHandler, tarimaHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -115,7 +119,7 @@ func main() {
 	slog.Info("servidor detenido")
 }
 
-func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.AuthHandler, appName string) http.Handler {
+func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.AuthHandler, tarimaHandler *handlers.TarimaHandler) http.Handler {
 	mux := http.NewServeMux()
 
 	// Auth (públicos)
@@ -133,26 +137,19 @@ func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.Au
 			middleware.NivelRequerido(store, 4)(
 				http.HandlerFunc(authHandler.Register))))
 
-	// Dashboard placeholder (protegido: nivel 1)
+	// Tarimas (protegidos: nivel 1)
+	mux.Handle("GET /tarimas",
+		middleware.AuthRequired(store)(
+			http.HandlerFunc(tarimaHandler.ListarTarimas)))
+	mux.Handle("GET /tarimas/lista",
+		middleware.AuthRequired(store)(
+			http.HandlerFunc(tarimaHandler.ListarTarimasFragment)))
+
+	// Dashboard (protegido: nivel 1) — lista de tarimas como home
 	mux.Handle("GET /",
 		middleware.AuthRequired(store)(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				session := middleware.SessionFromContext(r)
-				w.Header().Set("Content-Type", "text/html; charset=utf-8")
-				w.WriteHeader(http.StatusOK)
-				w.Write([]byte(`<!DOCTYPE html><html><head><title>` + appName + `</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head><body>
-<div class="container my-5"><div class="row justify-content-center"><div class="col-md-8">
-<div class="card"><div class="card-header bg-primary text-white"><h4><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h4></div>
-<div class="card-body">
-<p>Bienvenido, <strong>` + session.Username + `</strong> (rol: ` + session.NombreRol + `, nivel: ` + strconv.Itoa(session.Nivel) + `)</p>
-<p class="text-muted">Dashboard completo disponible en F5.</p>
-<form hx-post="/logout" hx-swap="none"><button class="btn btn-danger"><i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión</button></form>
-</div></div></div></div></div>
-<script src="https://unpkg.com/htmx.org@2.0.4"></script>
-</body></html>`))
+				http.Redirect(w, r, "/tarimas", http.StatusFound)
 			})))
 
 	// Healthz (público)
