@@ -125,11 +125,7 @@ func (h *TarimaHandler) GuardarTarima(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.tarima.Create(r.Context(), &t)
 	if err != nil {
-		errKey := "validation"
-		if err == tarima.ErrCodigoBarrasDuplicado {
-			errKey = "duplicate"
-		}
-		h.renderFormError(w, session, errKey, "", false)
+		h.renderFormError(w, session, tarimaErrorKey(err), "", false)
 		return
 	}
 
@@ -198,16 +194,12 @@ func (h *TarimaHandler) ActualizarTarima(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.tarima.Update(r.Context(), &t); err != nil {
-		errKey := "validation"
-		if err == tarima.ErrCodigoBarrasDuplicado {
-			errKey = "duplicate"
-		}
 		data := tarimaFormData{
 			Title:    "Editar Tarima",
 			AppName:  appName,
 			Session:  session,
 			Tarima:   &t,
-			Error:    errKey,
+			Error:    tarimaErrorKey(err),
 			EditMode: true,
 		}
 		h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
@@ -244,6 +236,21 @@ func (h *TarimaHandler) EliminarTarima(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func tarimaErrorKey(err error) string {
+	switch {
+	case err == tarima.ErrCodigoBarrasDuplicado:
+		return "duplicate"
+	case err == tarima.ErrBarcodeLongitud:
+		return "barcode_length"
+	case err == tarima.ErrBarcodePrefix:
+		return "barcode_prefix"
+	case err == tarima.ErrBarcodeMarker:
+		return "barcode_marker"
+	default:
+		return "validation"
+	}
 }
 
 func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middleware.SessionData, errKey, fallbackErr string, editMode bool) {

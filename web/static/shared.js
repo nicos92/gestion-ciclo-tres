@@ -106,19 +106,36 @@ function autoFillFromBarcode(input) {
     }
     input.value = value;
 
-    var producto = document.getElementById('numeroProducto');
-    if (producto && value.length >= 7) {
-        producto.value = value.substring(1, 7);
+    var invalid0 = document.getElementById('invalidFormat0');
+    var invalid9998 = document.getElementById('invalidFormat9998');
+
+  var hideErrors = function () {
+        input.classList.remove('is-invalid');
+        if (invalid0) invalid0.style.display = 'none';
+        if (invalid9998) invalid9998.style.display = 'none';
+  };
+
+    if (value.length < 30) {
+        hideErrors();
+        return;
     }
 
     if (value.length === 30) {
         if (value.charAt(0) !== '0') {
+            input.classList.add('is-invalid');
+            if (invalid0) invalid0.style.display = 'block';
+            if (invalid9998) invalid9998.style.display = 'none';
             return;
         }
         if (value.substring(13, 17) !== '9998') {
+            input.classList.add('is-invalid');
+            if (invalid0) invalid0.style.display = 'none';
+            if (invalid9998) invalid9998.style.display = 'block';
             return;
         }
+        hideErrors();
 
+        var producto = document.getElementById('numeroProducto');
         var tarima = document.getElementById('numeroTarima');
         var usuario = document.getElementById('numeroUsuario');
         var conservacion = document.getElementById('conservacion');
@@ -126,6 +143,7 @@ function autoFillFromBarcode(input) {
         var peso = document.getElementById('peso');
         var venta = document.getElementById('numeroVenta');
 
+        if(producto) producto.value = value.substring(1, 7);
         if (tarima) tarima.value = value.substring(7, 13);
         if (conservacion) conservacion.value = value.substring(17, 18);
         if (usuario) usuario.value = value.substring(18, 21);
