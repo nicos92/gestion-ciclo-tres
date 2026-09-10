@@ -69,8 +69,8 @@ func TestMigrateAppliesMigrations(t *testing.T) {
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations`).Scan(&versionCount); err != nil {
 		t.Fatalf("contar versiones: %v", err)
 	}
-	if versionCount != 2 {
-		t.Errorf("versiones aplicadas = %d, se esperaban 2", versionCount)
+	if versionCount != 3 {
+		t.Errorf("versiones aplicadas = %d, se esperaban 3", versionCount)
 	}
 
 	for _, table := range []string{"roles", "usuarios", "tarimas", "historial_tarimas"} {
@@ -82,6 +82,15 @@ func TestMigrateAppliesMigrations(t *testing.T) {
 		if n != 1 {
 			t.Errorf("no existe la tabla %s", table)
 		}
+	}
+
+	var viewCount int
+	if err := db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM sqlite_master WHERE type='view' AND name='vista_tarimas_con_legajo'`).Scan(&viewCount); err != nil {
+		t.Fatalf("buscar vista: %v", err)
+	}
+	if viewCount != 1 {
+		t.Errorf("no existe la vista vista_tarimas_con_legajo")
 	}
 
 	var roles int
@@ -109,7 +118,7 @@ func TestMigrateIdempotent(t *testing.T) {
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations`).Scan(&count); err != nil {
 		t.Fatalf("contar versiones: %v", err)
 	}
-	if count != 2 {
-		t.Errorf("versiones = %d tras re-ejecutar, se esperaban 2", count)
+	if count != 3 {
+		t.Errorf("versiones = %d tras re-ejecutar, se esperaban 3", count)
 	}
 }
