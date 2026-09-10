@@ -16,12 +16,14 @@ type mockRepo struct {
 	createCalled   bool
 	getByIDCalled  bool
 	updateCalled   bool
+	deleteCalled   bool
 	createID       int64
 	tarimas        []Tarima
 	singleTarima   *Tarima
 	createErr      error
 	getErr         error
 	updateErr      error
+	deleteErr      error
 }
 
 func (m *mockRepo) ListToday(_ context.Context, limit int) ([]Tarima, error) {
@@ -69,6 +71,24 @@ func (m *mockRepo) GetByID(_ context.Context, id int64) (*Tarima, error) {
 func (m *mockRepo) Update(_ context.Context, t *Tarima) error {
 	m.updateCalled = true
 	return m.updateErr
+}
+
+func (m *mockRepo) GetByIDRaw(_ context.Context, id int64) (*Tarima, error) {
+	if m.getErr != nil {
+		return nil, m.getErr
+	}
+	if m.singleTarima != nil {
+		return m.singleTarima, nil
+	}
+	return &Tarima{ID: id, CodigoBarras: "08801970009998010100450450000025-123456"}, nil
+}
+
+func (m *mockRepo) Delete(_ context.Context, id int64) (*Tarima, error) {
+	m.deleteCalled = true
+	if m.deleteErr != nil {
+		return nil, m.deleteErr
+	}
+	return &Tarima{ID: id, CodigoBarras: "08801970009998010100450450000025-123456"}, nil
 }
 
 func TestList_DefaultToday(t *testing.T) {
@@ -334,5 +354,37 @@ func TestUpdate_Duplicado(t *testing.T) {
 	err := svc.Update(context.Background(), tarima)
 	if err != ErrCodigoBarrasDuplicado {
 		t.Errorf("got %v, want ErrCodigoBarrasDuplicado", err)
+	}
+}
+
+func TestDelete_Success(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	result, err := svc.Delete(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if !repo.deleteCalled {
+		t.Error("expected repo.Delete to be called")
+	}
+	if result == nil {
+		t.Fatal("expected non-nil result")
+	}
+	if result.ID != 1 {
+		t.Errorf("ID = %d, want 1", result.ID)
+	}
+}
+
+func TestDelete_NotFound(t *testing.T) {
+	repo := &mockRepo{getErr: sql.ErrNoRows}
+	svc := NewTarimaService(repo)
+
+	_, err := svc.Delete(context.Background(), 999)
+	if err != ErrTarimaNoEncontrada {
+		t.Errorf("got %v, want ErrTarimaNoEncontrada", err)
+	}
+	if repo.deleteCalled {
+		t.Error("repo.Delete should not be called when GetByIDRaw fails")
 	}
 }
