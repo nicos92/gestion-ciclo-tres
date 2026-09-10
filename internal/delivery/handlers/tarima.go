@@ -31,6 +31,16 @@ type tarimasPageData struct {
 	ShowAll    bool
 }
 
+type tarimaFormData struct {
+	Title    string
+	AppName  string
+	Session  *middleware.SessionData
+	Tarima   *tarima.Tarima
+	Error    string
+	Success  string
+	EditMode bool
+}
+
 const appName = "Gestión de Tarimas"
 
 func (h *TarimaHandler) ListarTarimas(w http.ResponseWriter, r *http.Request) {
@@ -61,13 +71,186 @@ func (h *TarimaHandler) ListarTarimasFragment(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// hx-push-url: mantiene la URL canónica /tarimas?<filtros> para
-	// imprimir/compartir (el fragmento no es la URL definitiva).
 	if url := canonicalTarimasURL(filters, showAll); url != "" {
 		w.Header().Set("HX-Push-Url", url)
 	}
 
 	h.renderer.RenderPartial(w, "tabla_tarimas", data, http.StatusOK)
+}
+
+func (h *TarimaHandler) ShowNuevaTarima(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+	data := tarimaFormData{
+		Title:    "Nueva Tarima",
+		AppName:  appName,
+		Session:  session,
+		EditMode: false,
+	}
+	h.renderer.Render(w, "nueva_tarima", data, http.StatusOK)
+}
+
+func (h *TarimaHandler) GuardarTarima(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+
+	if err := r.ParseForm(); err != nil {
+		h.renderFormError(w, session, "", "validation", false)
+		return
+	}
+
+	t := tarima.Tarima{
+		CodigoBarras:   r.FormValue("codigoBarras"),
+		NumeroProducto: r.FormValue("numeroProducto"),
+		NumeroTarima:   r.FormValue("numeroTarima"),
+		NumeroUsuario:  r.FormValue("numeroUsuario"),
+		Conservacion:   r.FormValue("conservacion"),
+		NumeroVenta:    r.FormValue("numeroVenta"),
+		Descripcion:    r.FormValue("descripcion"),
+	}
+
+	if v := r.FormValue("cantidadCajas"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			t.CantidadCajas = n
+		}
+	}
+	if v := r.FormValue("peso"); v != "" {
+		if p, err := strconv.ParseFloat(v, 64); err == nil {
+			t.Peso = p
+		}
+	}
+
+	session2 := middleware.SessionFromContext(r)
+	if session2 != nil {
+		t.IDUsuario = &session2.UserID
+	}
+
+	_, err := h.tarima.Create(r.Context(), &t)
+	if err != nil {
+		errKey := "validation"
+		if err == tarima.ErrCodigoBarrasDuplicado {
+			errKey = "duplicate"
+		}
+		h.renderFormError(w, session, errKey, "", false)
+		return
+	}
+
+	h.renderFormSuccess(w, session, "created", false)
+}
+
+func (h *TarimaHandler) ShowEditarTarima(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Redirect(w, r, "/tarimas", http.StatusFound)
+		return
+	}
+
+	t, err := h.tarima.GetByID(r.Context(), id)
+	if err != nil {
+		http.Redirect(w, r, "/tarimas", http.StatusFound)
+		return
+	}
+
+	data := tarimaFormData{
+		Title:    "Editar Tarima",
+		AppName:  appName,
+		Session:  session,
+		Tarima:   t,
+		EditMode: true,
+	}
+	h.renderer.Render(w, "editar_tarima", data, http.StatusOK)
+}
+
+func (h *TarimaHandler) ActualizarTarima(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Redirect(w, r, "/tarimas", http.StatusFound)
+		return
+	}
+
+	if err := r.ParseForm(); err != nil {
+		h.renderFormError(w, session, "", "validation", true)
+		return
+	}
+
+	t := tarima.Tarima{
+		ID:             id,
+		CodigoBarras:   r.FormValue("codigoBarras"),
+		NumeroProducto: r.FormValue("numeroProducto"),
+		NumeroTarima:   r.FormValue("numeroTarima"),
+		NumeroUsuario:  r.FormValue("numeroUsuario"),
+		Conservacion:   r.FormValue("conservacion"),
+		NumeroVenta:    r.FormValue("numeroVenta"),
+		Descripcion:    r.FormValue("descripcion"),
+	}
+
+	if v := r.FormValue("cantidadCajas"); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			t.CantidadCajas = n
+		}
+	}
+	if v := r.FormValue("peso"); v != "" {
+		if p, err := strconv.ParseFloat(v, 64); err == nil {
+			t.Peso = p
+		}
+	}
+
+	if err := h.tarima.Update(r.Context(), &t); err != nil {
+		errKey := "validation"
+		if err == tarima.ErrCodigoBarrasDuplicado {
+			errKey = "duplicate"
+		}
+		data := tarimaFormData{
+			Title:    "Editar Tarima",
+			AppName:  appName,
+			Session:  session,
+			Tarima:   &t,
+			Error:    errKey,
+			EditMode: true,
+		}
+		h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
+		return
+	}
+
+	updated, _ := h.tarima.GetByID(r.Context(), id)
+	data := tarimaFormData{
+		Title:    "Editar Tarima",
+		AppName:  appName,
+		Session:  session,
+		Tarima:   updated,
+		Success:  "updated",
+		EditMode: true,
+	}
+	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
+}
+
+func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middleware.SessionData, errKey, fallbackErr string, editMode bool) {
+	key := errKey
+	if key == "" {
+		key = fallbackErr
+	}
+	data := tarimaFormData{
+		Title:    "Nueva Tarima",
+		AppName:  appName,
+		Session:  session,
+		Error:    key,
+		EditMode: editMode,
+	}
+	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
+}
+
+func (h *TarimaHandler) renderFormSuccess(w http.ResponseWriter, session *middleware.SessionData, successKey string, editMode bool) {
+	data := tarimaFormData{
+		Title:    "Nueva Tarima",
+		AppName:  appName,
+		Session:  session,
+		Success:  successKey,
+		EditMode: editMode,
+	}
+	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
+	w.Header().Set("HX-Push-Url", "/tarimas/nueva")
 }
 
 func (h *TarimaHandler) loadTarimas(r *http.Request, filters tarima.FiltrosTarima, showAll bool) (*tarimasPageData, error) {
