@@ -24,19 +24,19 @@ func NewUsuarioHandler(r *render.Renderer, a *identity.AuthService, ts *tarima.T
 }
 
 type dashboardPageData struct {
-	Title        string
-	AppName      string
-	Session      *middleware.SessionData
-	TotalTarimas int
+	Title         string
+	AppName       string
+	Session       *middleware.SessionData
+	TotalTarimas  int
 	TotalUsuarios int
 }
 
 type usuariosPageData struct {
-	Title   string
-	AppName string
-	Session *middleware.SessionData
+	Title    string
+	AppName  string
+	Session  *middleware.SessionData
 	Usuarios []identity.Usuario
-	Success string
+	Success  string
 }
 
 type editarUsuarioPageData struct {
@@ -186,16 +186,18 @@ func (h *UsuarioHandler) ActualizarUsuario(w http.ResponseWriter, r *http.Reques
 	if err := h.auth.Update(r.Context(), u, newPassword); err != nil {
 		slog.Warn("actualización de usuario fallida", "error", err)
 		errKey := "update_failed"
-		if err == identity.ErrUsernameExiste || err == identity.ErrEmailExiste {
+		switch err {
+		case identity.ErrUsernameExiste, identity.ErrEmailExiste:
 			errKey = "user_exists"
-		} else if err == identity.ErrEmailInvalido {
+		case identity.ErrEmailInvalido:
 			errKey = "invalid_email"
-		} else if err == identity.ErrCamposRequeridos {
+		case identity.ErrCamposRequeridos:
 			errKey = "empty_fields"
 		}
 		http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error="+errKey, http.StatusFound)
 		return
 	}
 
-	http.Redirect(w, r, "/usuarios?success=usuario_actualizado", http.StatusFound)
+	w.Header().Set("HX-Redirect", "/usuarios?success=usuario_actualizado")
+	w.WriteHeader(http.StatusOK)
 }

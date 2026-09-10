@@ -81,12 +81,12 @@ func (h *AuthHandler) ShowRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	h.renderer.Render(w, "register", struct {
-		Title     string
-		AppName   string
-		Error     string
-		Success   bool
-		IsAdmin   bool
-		Session   *middleware.SessionData
+		Title   string
+		AppName string
+		Error   string
+		Success bool
+		IsAdmin bool
+		Session *middleware.SessionData
 	}{
 		Title:   "Registrar Usuario",
 		AppName: "Gestión de Tarimas",
@@ -174,7 +174,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.Redirect(w, r, "/register?success=true", http.StatusFound)
+	w.Header().Set("HX-Redirect", "/usuarios?success=usuario_actualizado")
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
