@@ -1,0 +1,180 @@
+{{define "content"}}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card p-4">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">Editar Información de Usuario</h3>
+                </div>
+                <div class="card-body">
+                    {{if .Error}}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{if eq .Error "empty_fields"}}
+                            Por favor, complete todos los campos obligatorios.
+                        {{else if eq .Error "invalid_email"}}
+                            Por favor, ingrese un email válido.
+                        {{else if eq .Error "user_exists"}}
+                            El nombre de usuario o email ya están registrados.
+                        {{else if eq .Error "update_failed"}}
+                            Error al actualizar la información del usuario. Por favor, inténtelo de nuevo.
+                        {{else if eq .Error "empty_password_fields"}}
+                            Para cambiar la contraseña, debe completar ambos campos de contraseña.
+                        {{else if eq .Error "password_mismatch"}}
+                            Las contraseñas no coinciden. Por favor, inténtelo de nuevo.
+                        {{else if eq .Error "weak_password"}}
+                            La contraseña debe tener al menos 6 caracteres.
+                        {{else}}
+                            {{.Error}}
+                        {{end}}
+                    </div>
+                    {{end}}
+
+                    {{if eq .Success "usuario_actualizado"}}
+                    <div class="alert alert-success" role="alert">
+                        <i class="fas fa-check-circle me-2"></i>
+                        ¡La información del usuario ha sido actualizada exitosamente!
+                    </div>
+                    {{end}}
+
+                    {{if .Usuario}}
+                    <form hx-post="/usuarios/actualizar/{{.Usuario.ID}}" hx-swap="none">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="firstName" class="form-label">Nombre</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="firstName" name="firstName" value="{{.Usuario.FirstName}}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="lastName" class="form-label">Apellido</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                        <input type="text" class="form-control" id="lastName" name="lastName" value="{{.Usuario.LastName}}" required>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                                <input type="email" class="form-control" id="email" name="email" value="{{.Usuario.Email}}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Nombre de Usuario</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                <input type="text" class="form-control" id="username" name="username" value="{{.Usuario.Username}}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="legajo" class="form-label">Número de Legajo</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input type="text" class="form-control" id="legajo" name="legajo" value="{{.Usuario.Legajo}}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="department" class="form-label">Departamento</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-building"></i></span>
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="ventas" {{if eq .Usuario.Department "ventas"}}selected{{end}}>Ventas</option>
+                                    <option value="inventario" {{if eq .Usuario.Department "inventario"}}selected{{end}}>Inventario</option>
+                                    <option value="logistica" {{if eq .Usuario.Department "logistica"}}selected{{end}}>Logística</option>
+                                    <option value="administracion" {{if eq .Usuario.Department "administracion"}}selected{{end}}>Administración</option>
+                                    <option value="produccion" {{if eq .Usuario.Department "produccion"}}selected{{end}}>Producción</option>
+                                    <option value="calidad" {{if eq .Usuario.Department "calidad"}}selected{{end}}>Control de Calidad</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="idRol" class="form-label">Rol de Usuario</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user-tag"></i></span>
+                                    <select class="form-select" id="idRol" name="idRol" required>
+                                        <option value="4" {{if eq .Usuario.Rol.ID 4}}selected{{end}}>Producción (Acceso limitado)</option>
+                                        <option value="3" {{if eq .Usuario.Rol.ID 3}}selected{{end}}>Jefe de Producción (Gestión de tarimas)</option>
+                                        <option value="2" {{if eq .Usuario.Rol.ID 2}}selected{{end}}>Supervisor (Eliminar tarimas)</option>
+                                        <option value="1" {{if eq .Usuario.Rol.ID 1}}selected{{end}}>Administrador (Acceso completo)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check mb-3 w-100">
+                                    <input type="checkbox" class="form-check-input" id="activo" name="activo" {{if .Usuario.Activo}}checked{{end}}>
+                                    <label class="form-check-label" for="activo">Usuario Activo</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="newPassword" class="form-label">Nueva Contraseña</label>
+                                    <div class="input-group position-relative">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="newPassword" name="newPassword" placeholder="Dejar en blanco para mantener actual">
+                                        <button type="button" class="password-toggle position-absolute end-0 top-50 translate-middle-y pe-3 border-0 bg-transparent" style="cursor: pointer; z-index: 5;" onclick="togglePassword('newPassword', 'newPasswordToggle')">
+                                            <i id="newPasswordToggle" class="fas fa-eye-slash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="confirmPassword" class="form-label">Confirmar Nueva Contraseña</label>
+                                    <div class="input-group position-relative">
+                                        <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="Dejar en blanco para mantener actual">
+                                        <button type="button" class="password-toggle position-absolute end-0 top-50 translate-middle-y pe-3 border-0 bg-transparent" style="cursor: pointer; z-index: 5;" onclick="togglePassword('confirmPassword', 'confirmPasswordToggle')">
+                                            <i id="confirmPasswordToggle" class="fas fa-eye-slash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-0 p-0" id="passwordMatchMessage" style="display: none;">
+                            <div id="passwordDivMessage" class="alert p-0 alert-info alert-danger" role="alert">
+                                <i class="fas fa-info-circle me-2"></i>
+                                <span id="passwordMatchText"></span>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a href="/usuarios" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Volver a Usuarios
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Actualizar Usuario
+                            </button>
+                        </div>
+                    </form>
+                    {{else}}
+                    <div class="alert alert-warning" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Usuario no encontrado.
+                    </div>
+                    <a href="/usuarios" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver a Usuarios
+                    </a>
+                    {{end}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}
