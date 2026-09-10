@@ -98,17 +98,14 @@
                       placeholder="Descripción adicional de la tarima">{{if .Tarima}}{{.Tarima.Descripcion}}{{end}}</textarea>
         </div>
         <div class="d-flex justify-content-between">
-            {{if .EditMode}}
             <a href="/tarimas" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver al Inventario
+                <i class="fas fa-arrow-left me-2"></i>Ir al Inventario
             </a>
+            {{if .EditMode}}
             <button type="submit" class="btn btn-submit btn-lg btn-focus-animation">
                 <i class="fas fa-save me-2"></i>Actualizar Tarima
             </button>
             {{else}}
-            <a href="/tarimas" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i>Volver al Panel
-            </a>
             <button type="submit" class="btn btn-submit btn-lg btn-focus-animation">
                 <i class="fas fa-save me-2"></i>Guardar Tarima
             </button>
