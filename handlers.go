@@ -56,7 +56,7 @@ func (h *todoHandlers) delete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "error interno", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *todoHandlers) toggle(w http.ResponseWriter, r *http.Request) {
