@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type Renderer struct {
@@ -21,7 +22,12 @@ func New(fsys embed.FS) (*Renderer, error) {
 				return ""
 			}
 			switch v := t.(type) {
+			case time.Time:
+				return v.In(time.Local).Format("2006-01-02 15:04:05")
 			case string:
+				if len(v) >= 16 {
+					return v[:16]
+				}
 				if len(v) >= 10 {
 					return v[:10]
 				}
@@ -66,6 +72,28 @@ func New(fsys embed.FS) (*Renderer, error) {
 		return nil, fmt.Errorf("templates sub fs: %w", err)
 	}
 
+	partialsDir, err := fs.Sub(templatesDir, "partials")
+	if err != nil {
+		return nil, fmt.Errorf("templates partials sub fs: %w", err)
+	}
+
+	partialEntries, err := fs.ReadDir(partialsDir, ".")
+	if err != nil {
+		return nil, fmt.Errorf("read partials dir: %w", err)
+	}
+
+	var partialContents []string
+	for _, pe := range partialEntries {
+		if pe.IsDir() {
+			continue
+		}
+		pc, err := fs.ReadFile(partialsDir, pe.Name())
+		if err != nil {
+			return nil, fmt.Errorf("read partial %s: %w", pe.Name(), err)
+		}
+		partialContents = append(partialContents, string(pc))
+	}
+
 	templates := make(map[string]*template.Template)
 
 	layoutContent, err := fs.ReadFile(templatesDir, "layout.html")
@@ -89,22 +117,6 @@ func New(fsys embed.FS) (*Renderer, error) {
 			return nil, fmt.Errorf("read %s: %w", entry.Name(), err)
 		}
 
-		// Also read partials
-		partialsDir, _ := fs.Sub(templatesDir, "partials")
-		var partialContents []string
-		if partialsDir != nil {
-			partialEntries, _ := fs.ReadDir(partialsDir, ".")
-			for _, pe := range partialEntries {
-				if pe.IsDir() {
-					continue
-				}
-				pc, err := fs.ReadFile(partialsDir, pe.Name())
-				if err == nil {
-					partialContents = append(partialContents, string(pc))
-				}
-			}
-		}
-
 		combined := string(layoutContent) + "\n" + string(pageContent)
 		for _, pc := range partialContents {
 			combined += "\n" + pc
@@ -117,10 +129,48 @@ func New(fsys embed.FS) (*Renderer, error) {
 		templates[name] = t
 	}
 
+	// Registrar los partials como templates standalone para RenderPartial
+	// (fragmentos htmx sin layout).
+	for _, pe := range partialEntries {
+		if pe.IsDir() {
+			continue
+		}
+		name := strings.TrimSuffix(pe.Name(), ".html")
+		pc, err := fs.ReadFile(partialsDir, pe.Name())
+		if err != nil {
+			return nil, fmt.Errorf("read partial %s: %w", pe.Name(), err)
+		}
+		t, err := template.New(name).Funcs(funcMap).Parse(string(pc))
+		if err != nil {
+			return nil, fmt.Errorf("parse partial %s: %w", pe.Name(), err)
+		}
+		if _, ok := templates[name]; !ok {
+			templates[name] = t
+		}
+	}
+
 	return &Renderer{templates: templates, funcMap: funcMap}, nil
 }
 
 func (r *Renderer) Render(w http.ResponseWriter, name string, data any, statusCode int) {
+	t, ok := r.templates[name]
+	if !ok {
+		http.Error(w, fmt.Sprintf("template %q not found", name), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(statusCode)
+
+	if err := t.ExecuteTemplate(w, name, data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// RenderPartial escribe solo un fragmento de template (definido con {{define}})
+// sin layout. Los templates de fragmentos se registran en r.templates con su
+// propio nombre desde New.
+func (r *Renderer) RenderPartial(w http.ResponseWriter, name string, data any, statusCode int) {
 	t, ok := r.templates[name]
 	if !ok {
 		http.Error(w, fmt.Sprintf("template %q not found", name), http.StatusInternalServerError)
