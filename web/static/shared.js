@@ -48,3 +48,20 @@ document.addEventListener('DOMContentLoaded', function() {
     if (password) password.addEventListener('input', checkPasswordMatch);
     if (confirmPassword) confirmPassword.addEventListener('input', checkPasswordMatch);
 });
+
+function limpiarFiltros() {
+    const ids = [
+        'numero_producto', 'numero_tarima', 'numero_usuario', 'numero_venta',
+        'fecha_registro', 'legajo', 'nombre_usuario',
+        'cantidad_cajas_min', 'peso_min'
+    ];
+    ids.forEach(function(id) {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    if (window.htmx) {
+        htmx.trigger('#filtroTarimas', 'submit');
+    } else {
+        document.getElementById('filtroTarimas').submit();
+    }
+}
