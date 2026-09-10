@@ -42,7 +42,37 @@ function checkPasswordMatch() {
     }
 }
 
+var tarimaIdPendiente = null;
+
+function confirmarEliminar(id) {
+    tarimaIdPendiente = id;
+    var modal = new bootstrap.Modal(document.getElementById('modalEliminar'));
+    modal.show();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    var btnConfirmar = document.getElementById('btnConfirmarEliminar');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', function() {
+            if (tarimaIdPendiente !== null) {
+                var modal = bootstrap.Modal.getInstance(document.getElementById('modalEliminar'));
+                if (modal) modal.hide();
+                htmx.ajax('DELETE', '/tarimas/' + tarimaIdPendiente, {
+                    target: '#tarima-' + tarimaIdPendiente,
+                    swap: 'delete'
+                });
+                tarimaIdPendiente = null;
+            }
+        });
+    }
+
+    var modalEl = document.getElementById('modalEliminar');
+    if (modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function() {
+            tarimaIdPendiente = null;
+        });
+    }
+
     var password = document.getElementById('password');
     var confirmPassword = document.getElementById('confirmPassword');
     if (password) password.addEventListener('input', checkPasswordMatch);
