@@ -117,7 +117,7 @@ func TestValidateTarimaCodigoBarrasRequerido(t *testing.T) {
 
 func TestValidateTarimaNumeroTarimaRequerido(t *testing.T) {
 	tarima := &Tarima{
-		CodigoBarras:   "088019700099981010004545000000",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroVenta:    "25-123456",
 		CantidadCajas:  45,
@@ -129,7 +129,7 @@ func TestValidateTarimaNumeroTarimaRequerido(t *testing.T) {
 
 func TestValidateTarimaVentaFormato(t *testing.T) {
 	tarima := &Tarima{
-		CodigoBarras:   "088019700099981010004545000000",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroVenta:    "123",
@@ -142,7 +142,7 @@ func TestValidateTarimaVentaFormato(t *testing.T) {
 
 func TestValidateTarimaRangos(t *testing.T) {
 	tarima := &Tarima{
-		CodigoBarras:   "088019700099981010004545000000",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroVenta:    "25-123456",
@@ -161,7 +161,7 @@ func TestValidateTarimaRangos(t *testing.T) {
 
 func TestValidateTarimaProductoMax(t *testing.T) {
 	tarima := &Tarima{
-		CodigoBarras:   "088019700099981010004545000000",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "8801970",
 		NumeroTarima:   "000999",
 		NumeroVenta:    "25-123456",
@@ -174,7 +174,7 @@ func TestValidateTarimaProductoMax(t *testing.T) {
 
 func TestValidateTarimaUsuarioMax(t *testing.T) {
 	tarima := &Tarima{
-		CodigoBarras:   "088019700099981010004545000000",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroUsuario:  "0100",
@@ -183,5 +183,44 @@ func TestValidateTarimaUsuarioMax(t *testing.T) {
 	}
 	if err := ValidateTarima(tarima); err != ErrNumeroUsuarioMax {
 		t.Errorf("got %v, want ErrNumeroUsuarioMax", err)
+	}
+}
+
+func TestValidateTarimaBarcodeLongitud(t *testing.T) {
+	tarima := &Tarima{
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroVenta:    "25-123456",
+		CantidadCajas:  45,
+	}
+	tarima.CodigoBarras = "08801970009999998101004504500"
+	if err := ValidateTarima(tarima); err != ErrBarcodeLongitud {
+		t.Errorf("got %v, want ErrBarcodeLongitud", err)
+	}
+}
+
+func TestValidateTarimaBarcodePrefix(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "188019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroVenta:    "25-123456",
+		CantidadCajas:  45,
+	}
+	if err := ValidateTarima(tarima); err != ErrBarcodePrefix {
+		t.Errorf("got %v, want ErrBarcodePrefix", err)
+	}
+}
+
+func TestValidateTarimaBarcodeMarker(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999991010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroVenta:    "25-123456",
+		CantidadCajas:  45,
+	}
+	if err := ValidateTarima(tarima); err != ErrBarcodeMarker {
+		t.Errorf("got %v, want ErrBarcodeMarker", err)
 	}
 }
