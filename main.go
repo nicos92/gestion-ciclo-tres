@@ -145,6 +145,26 @@ func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.Au
 		middleware.AuthRequired(store)(
 			http.HandlerFunc(tarimaHandler.ListarTarimasFragment)))
 
+	// Tarimas — alta (nivel 1)
+	mux.Handle("GET /tarimas/nueva",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 1)(
+				http.HandlerFunc(tarimaHandler.ShowNuevaTarima))))
+	mux.Handle("POST /tarimas",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 1)(
+				http.HandlerFunc(tarimaHandler.GuardarTarima))))
+
+	// Tarimas — edición (nivel 2)
+	mux.Handle("GET /tarimas/editar/{id}",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 2)(
+				http.HandlerFunc(tarimaHandler.ShowEditarTarima))))
+	mux.Handle("POST /tarimas/actualizar/{id}",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 2)(
+				http.HandlerFunc(tarimaHandler.ActualizarTarima))))
+
 	// Dashboard (protegido: nivel 1) — lista de tarimas como home
 	mux.Handle("GET /",
 		middleware.AuthRequired(store)(
