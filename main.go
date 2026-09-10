@@ -83,9 +83,11 @@ func main() {
 	tarimaSvc := tarima.NewTarimaService(tarimaRepo)
 	tarimaHandler := handlers.NewTarimaHandler(renderer, tarimaSvc, store)
 
+	usuarioHandler := handlers.NewUsuarioHandler(renderer, authSvc, tarimaSvc, store)
+
 	srv := &http.Server{
 		Addr:              cfg.Port,
-		Handler:           routes(db, store, authHandler, tarimaHandler),
+		Handler:           routes(db, store, authHandler, tarimaHandler, usuarioHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -119,7 +121,7 @@ func main() {
 	slog.Info("servidor detenido")
 }
 
-func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.AuthHandler, tarimaHandler *handlers.TarimaHandler) http.Handler {
+func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.AuthHandler, tarimaHandler *handlers.TarimaHandler, usuarioHandler *handlers.UsuarioHandler) http.Handler {
 	mux := http.NewServeMux()
 
 	// Auth (públicos)
@@ -171,11 +173,34 @@ func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.Au
 			middleware.NivelRequerido(store, 2)(
 				http.HandlerFunc(tarimaHandler.EliminarTarima))))
 
-	// Dashboard (protegido: nivel 1) — lista de tarimas como home
+	// Dashboard (protegido: nivel 1)
+	mux.Handle("GET /dashboard",
+		middleware.AuthRequired(store)(
+			http.HandlerFunc(usuarioHandler.ShowDashboard)))
+
+	// Usuarios — listar (nivel 4)
+	mux.Handle("GET /usuarios",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 4)(
+				http.HandlerFunc(usuarioHandler.ListarUsuarios))))
+
+	// Usuarios — editar form (nivel 4)
+	mux.Handle("GET /usuarios/editar/{id}",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 4)(
+				http.HandlerFunc(usuarioHandler.ShowEditarUsuario))))
+
+	// Usuarios — actualizar (nivel 4)
+	mux.Handle("POST /usuarios/actualizar/{id}",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 4)(
+				http.HandlerFunc(usuarioHandler.ActualizarUsuario))))
+
+	// Home — redirect a dashboard
 	mux.Handle("GET /",
 		middleware.AuthRequired(store)(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				http.Redirect(w, r, "/tarimas", http.StatusFound)
+				http.Redirect(w, r, "/dashboard", http.StatusFound)
 			})))
 
 	// Healthz (público)
