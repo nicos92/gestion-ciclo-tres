@@ -57,6 +57,15 @@ func (r *SQLiteTarimaRepository) CountToday(ctx context.Context) (int, error) {
 	return n, nil
 }
 
+func (r *SQLiteTarimaRepository) CountAll(ctx context.Context) (int, error) {
+	var n int
+	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM tarimas`).Scan(&n)
+	if err != nil {
+		return 0, fmt.Errorf("contar tarimas: %w", err)
+	}
+	return n, nil
+}
+
 func (r *SQLiteTarimaRepository) Create(ctx context.Context, t *tarima.Tarima) (int64, error) {
 	res, err := r.db.ExecContext(ctx, `
 		INSERT INTO tarimas (codigo_barras, numero_producto, numero_tarima, numero_usuario,
