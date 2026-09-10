@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -65,6 +67,7 @@ func New(fsys embed.FS) (*Renderer, error) {
 				return 0
 			}
 		},
+		"formatNumber": formatNumber,
 	}
 
 	templatesDir, err := fs.Sub(fsys, "web/templates")
@@ -187,9 +190,37 @@ func (r *Renderer) RenderPartial(w http.ResponseWriter, name string, data any, s
 
 func formatFloat(f float64) string {
 	whole := int64(f)
-	decimal := int64((f - float64(whole)) * 100)
+	decimal := int64(math.Round((f - float64(whole)) * 100))
 	if decimal < 0 {
 		decimal = -decimal
 	}
 	return fmt.Sprintf("%d.%02d", whole, decimal)
+}
+
+func formatNumber(v interface{}) string {
+	var n int64
+	switch val := v.(type) {
+	case int:
+		n = int64(val)
+	case int64:
+		n = val
+	case float64:
+		n = int64(val)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+	sign := ""
+	if n < 0 {
+		sign = "-"
+		n = -n
+	}
+	s := strconv.FormatInt(n, 10)
+	result := ""
+	for i, c := range s {
+		if i > 0 && (len(s)-i)%3 == 0 {
+			result += "."
+		}
+		result += string(c)
+	}
+	return sign + result
 }
