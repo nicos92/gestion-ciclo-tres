@@ -1,0 +1,119 @@
+{{define "form_tarimas"}}
+<div id="form-container">
+    {{if .Success}}
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert" id="auto-dismiss-alert">
+        <i class="fas fa-check-circle me-2"></i>{{if eq .Success "created"}}¡Tarima registrada correctamente!{{end}}{{if eq .Success "updated"}}¡Tarima actualizada correctamente!{{end}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{end}}
+
+    {{if .Error}}
+    <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{if eq .Error "duplicate"}}Ya existe una tarima registrada con este código de barras en la misma fecha.{{else if eq .Error "validation"}}Por favor revise los campos del formulario.{{else if eq .Error "not_found"}}La tarima no fue encontrada.{{else}}Ocurrió un error inesperado.{{end}}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {{end}}
+
+    <form {{if .EditMode}}hx-post="/tarimas/actualizar/{{.Tarima.ID}}"{{else}}hx-post="/tarimas"{{end}}
+          hx-target="#form-container" hx-swap="outerHTML">
+        <div class="input-group has-validation mb-3">
+            <span class="input-group-text"><i class="fas fa-barcode"></i></span>
+            <input type="number" class="form-control" id="codigoBarras" name="codigoBarras"
+                   placeholder="Código de Barras" required step="1" maxlength="30"
+                   value="{{if .Tarima}}{{.Tarima.CodigoBarras}}{{end}}"
+                   oninput="autoFillFromBarcode(this)">
+            <div class="invalid-feedback">El código de barras es requerido y debe tener máximo 30 dígitos.</div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-tag"></i></span>
+                    <input type="number" class="form-control" id="numeroProducto" name="numeroProducto"
+                           placeholder="Producto" required step="1" maxlength="6"
+                           value="{{if .Tarima}}{{.Tarima.NumeroProducto}}{{end}}">
+                    <div class="invalid-feedback">Máximo 6 dígitos.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
+                    <input type="number" class="form-control" id="numeroTarima" name="numeroTarima"
+                           placeholder="Tarima" required step="1" maxlength="6"
+                           value="{{if .Tarima}}{{.Tarima.NumeroTarima}}{{end}}">
+                    <div class="invalid-feedback">Máximo 6 dígitos.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                    <input type="number" class="form-control" id="numeroUsuario" name="numeroUsuario"
+                           placeholder="Usuario" required step="1" maxlength="3"
+                           value="{{if .Tarima}}{{.Tarima.NumeroUsuario}}{{end}}">
+                    <div class="invalid-feedback">Máximo 3 dígitos.</div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-snowflake"></i></span>
+                    <input type="number" class="form-control" id="conservacion" name="conservacion"
+                           placeholder="Conservación" maxlength="1"
+                           value="{{if .Tarima}}{{.Tarima.Conservacion}}{{end}}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-boxes"></i></span>
+                    <input type="number" class="form-control" id="cantidadCajas" name="cantidadCajas"
+                           placeholder="Cajas" required min="1" max="999" step="1" maxlength="3"
+                           value="{{if .Tarima}}{{.Tarima.CantidadCajas}}{{end}}">
+                    <div class="invalid-feedback">Entre 1 y 999.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-weight"></i></span>
+                    <input type="number" class="form-control" id="peso" name="peso"
+                           placeholder="Peso (kg)" min="0" max="9999.99" step="0.01"
+                           value="{{if .Tarima}}{{formatMoney .Tarima.Peso}}{{end}}">
+                    <div class="invalid-feedback">Entre 0 y 9999.99.</div>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="input-group has-validation mb-3">
+                    <span class="input-group-text"><i class="fas fa-tags"></i></span>
+                    <input type="text" class="form-control" id="numeroVenta" name="numeroVenta"
+                           placeholder="XX-XXXXXX" required maxlength="9" pattern="\d{2}-\d{6}"
+                           value="{{if .Tarima}}{{.Tarima.NumeroVenta}}{{end}}">
+                    <div class="invalid-feedback">Formato: 25-XXXXXX (2 dígitos - 6 dígitos).</div>
+                </div>
+            </div>
+        </div>
+        <div class="mb-3">
+            <label for="descripcion" class="form-label">Descripción</label>
+            <textarea class="form-control" id="descripcion" name="descripcion" rows="3"
+                      placeholder="Descripción adicional de la tarima">{{if .Tarima}}{{.Tarima.Descripcion}}{{end}}</textarea>
+        </div>
+        <div class="d-flex justify-content-between">
+            {{if .EditMode}}
+            <a href="/tarimas" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Inventario
+            </a>
+            <button type="submit" class="btn btn-submit btn-lg btn-focus-animation">
+                <i class="fas fa-save me-2"></i>Actualizar Tarima
+            </button>
+            {{else}}
+            <a href="/tarimas" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Volver al Panel
+            </a>
+            <button type="submit" class="btn btn-submit btn-lg btn-focus-animation">
+                <i class="fas fa-save me-2"></i>Guardar Tarima
+            </button>
+            {{end}}
+        </div>
+    </form>
+</div>
+{{end}}
