@@ -44,6 +44,9 @@ func TestSeedCreatesExampleData(t *testing.T) {
 			t.Errorf("código de barras inválido: %q (len=%d)", code, len(code))
 		}
 	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterar codigos de barras: %v", err)
+	}
 }
 
 func TestSeedIdempotent(t *testing.T) {
