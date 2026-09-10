@@ -20,7 +20,7 @@ func NewTarimaRepository(db *sql.DB) *SQLiteTarimaRepository {
 
 const tarimaSelectCols = `
 	id, codigo_barras, numero_producto, numero_tarima, numero_usuario,
-	cantidad_cajas, peso, numero_venta, descripcion, id_usuario,
+	conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario,
 	fecha_registro, fecha, legajo, nombre_usuario`
 
 func (r *SQLiteTarimaRepository) ListToday(ctx context.Context, limit int) ([]tarima.Tarima, error) {
@@ -57,6 +57,64 @@ func (r *SQLiteTarimaRepository) CountToday(ctx context.Context) (int, error) {
 	return n, nil
 }
 
+func (r *SQLiteTarimaRepository) Create(ctx context.Context, t *tarima.Tarima) (int64, error) {
+	res, err := r.db.ExecContext(ctx, `
+		INSERT INTO tarimas (codigo_barras, numero_producto, numero_tarima, numero_usuario,
+		                     conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		t.CodigoBarras, t.NumeroProducto, t.NumeroTarima, t.NumeroUsuario,
+		t.Conservacion, t.CantidadCajas, t.Peso, t.NumeroVenta, t.Descripcion, t.IDUsuario)
+	if err != nil {
+		return 0, fmt.Errorf("insertar tarima: %w", err)
+	}
+	return res.LastInsertId()
+}
+
+func (r *SQLiteTarimaRepository) GetByID(ctx context.Context, id int64) (*tarima.Tarima, error) {
+	query := `SELECT ` + tarimaSelectCols + ` FROM vista_tarimas_con_legajo WHERE id = ?`
+	row := r.db.QueryRowContext(ctx, query, id)
+
+	var t tarima.Tarima
+	var idUsuario sql.NullInt64
+	var fechaRegistroStr, fechaStr string
+	err := row.Scan(
+		&t.ID, &t.CodigoBarras, &t.NumeroProducto, &t.NumeroTarima, &t.NumeroUsuario,
+		&t.Conservacion, &t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
+		&fechaRegistroStr, &fechaStr, &t.Legajo, &t.NombreUsuario,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if idUsuario.Valid {
+		t.IDUsuario = &idUsuario.Int64
+	}
+	t.FechaRegistro = parseSQLTimestamp(fechaRegistroStr)
+	t.Fecha = parseSQLDate(fechaStr)
+	return &t, nil
+}
+
+func (r *SQLiteTarimaRepository) Update(ctx context.Context, t *tarima.Tarima) error {
+	res, err := r.db.ExecContext(ctx, `
+		UPDATE tarimas
+		SET codigo_barras = ?, numero_producto = ?, numero_tarima = ?, numero_usuario = ?,
+		    conservacion = ?, cantidad_cajas = ?, peso = ?, numero_venta = ?, descripcion = ?
+		WHERE id = ?`,
+		t.CodigoBarras, t.NumeroProducto, t.NumeroTarima, t.NumeroUsuario,
+		t.Conservacion, t.CantidadCajas, t.Peso, t.NumeroVenta, t.Descripcion,
+		t.ID)
+	if err != nil {
+		return fmt.Errorf("actualizar tarima: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("verificar actualización: %w", err)
+	}
+	if n == 0 {
+		return tarima.ErrTarimaNoEncontrada
+	}
+	return nil
+}
+
 func (r *SQLiteTarimaRepository) queryTarimas(ctx context.Context, query string, limit int) ([]tarima.Tarima, error) {
 	return r.queryTarimasArgs(ctx, query, []interface{}{limit})
 }
@@ -75,7 +133,7 @@ func (r *SQLiteTarimaRepository) queryTarimasArgs(ctx context.Context, query str
 		var fechaRegistroStr, fechaStr string
 		if err := rows.Scan(
 			&t.ID, &t.CodigoBarras, &t.NumeroProducto, &t.NumeroTarima, &t.NumeroUsuario,
-			&t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
+			&t.Conservacion, &t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
 			&fechaRegistroStr, &fechaStr, &t.Legajo, &t.NombreUsuario,
 		); err != nil {
 			return nil, fmt.Errorf("leer fila tarima: %w", err)
@@ -83,8 +141,6 @@ func (r *SQLiteTarimaRepository) queryTarimasArgs(ctx context.Context, query str
 		if idUsuario.Valid {
 			t.IDUsuario = &idUsuario.Int64
 		}
-		// Los timestamps almacenados son UTC (CURRENT_TIMESTAMP); se parsean
-		// como UTC para que formatDate los convierta a time.Local (TZ).
 		t.FechaRegistro = parseSQLTimestamp(fechaRegistroStr)
 		t.Fecha = parseSQLDate(fechaStr)
 		result = append(result, t)
@@ -144,9 +200,6 @@ func buildFilterQuery(filters tarima.FiltrosTarima, limit int) (string, []interf
 	return sb.String(), args
 }
 
-// parseSQLTimestamp interpreta la marca devuelta por el driver (RFC3339 UTC)
-// como UTC para que formatDate la convierta a time.Local (TZ). Soporta
-// también "YYYY-MM-DD HH:MM:SS" como fallback. Si falla, devuelve zero time.
 func parseSQLTimestamp(s string) time.Time {
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		return t
@@ -158,7 +211,6 @@ func parseSQLTimestamp(s string) time.Time {
 	return t
 }
 
-// parseSQLDate interpreta "YYYY-MM-DD"(o RFC3339) como UTC. Si falla, zero time.
 func parseSQLDate(s string) time.Time {
 	if t, err := time.Parse(time.RFC3339, s); err == nil {
 		return t
