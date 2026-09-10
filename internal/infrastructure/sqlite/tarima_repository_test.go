@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"testing"
 	"time"
@@ -387,5 +388,183 @@ func TestUpdate_NotFound(t *testing.T) {
 	err := repo.Update(ctx, tt)
 	if err != tarima.ErrTarimaNoEncontrada {
 		t.Errorf("got %v, want ErrTarimaNoEncontrada", err)
+	}
+}
+
+func TestGetByIDRaw_Exists(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	got, err := repo.GetByIDRaw(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByIDRaw: %v", err)
+	}
+	if got.NumeroProducto != "880197" {
+		t.Errorf("NumeroProducto = %q, want 880197", got.NumeroProducto)
+	}
+	if got.NumeroTarima != "000999" {
+		t.Errorf("NumeroTarima = %q, want 000999", got.NumeroTarima)
+	}
+}
+
+func TestGetByIDRaw_NotFound(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	_, err := repo.GetByIDRaw(ctx, 99999)
+	if err == nil {
+		t.Fatal("expected error for non-existent tarima, got nil")
+	}
+}
+
+func TestDelete_Success(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	eliminada, err := repo.Delete(ctx, id)
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	if eliminada.ID != id {
+		t.Errorf("eliminada.ID = %d, want %d", eliminada.ID, id)
+	}
+	if eliminada.NumeroProducto != "880197" {
+		t.Errorf("NumeroProducto = %q, want 880197", eliminada.NumeroProducto)
+	}
+
+	_, err = repo.GetByIDRaw(ctx, id)
+	if err == nil {
+		t.Error("tarima should no longer exist after delete")
+	}
+
+	var historialCount int
+	err = repo.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM historial_tarimas WHERE id_tarima_eliminada = ?`, id).Scan(&historialCount)
+	if err != nil {
+		t.Fatalf("contar historial: %v", err)
+	}
+	if historialCount != 1 {
+		t.Errorf("historial count = %d, want 1", historialCount)
+	}
+}
+
+func TestDelete_VerificaCamposHistorial(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	adminID := int64(1)
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+		Descripcion:    "Tarima de prueba",
+		IDUsuario:      &adminID,
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	_, err = repo.Delete(ctx, id)
+	if err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	var (
+		hID             int64
+		hCodigoBarras   string
+		hNumeroProducto string
+		hNumeroTarima   string
+		hCantidadCajas  int
+		hPeso           float64
+		hNumeroVenta    string
+		hDescripcion    string
+		hIDUsuario      sql.NullInt64
+	)
+	err = repo.db.QueryRowContext(ctx, `
+		SELECT id_tarima_eliminada, codigo_barras, numero_producto, numero_tarima,
+		       cantidad_cajas, peso, numero_venta, descripcion, id_usuario
+		FROM historial_tarimas WHERE id_tarima_eliminada = ?`, id).Scan(
+		&hID, &hCodigoBarras, &hNumeroProducto, &hNumeroTarima,
+		&hCantidadCajas, &hPeso, &hNumeroVenta, &hDescripcion, &hIDUsuario)
+	if err != nil {
+		t.Fatalf("leer historial: %v", err)
+	}
+	if hID != id {
+		t.Errorf("id_tarima_eliminada = %d, want %d", hID, id)
+	}
+	if hCodigoBarras != created.CodigoBarras {
+		t.Errorf("codigo_barras = %q, want %q", hCodigoBarras, created.CodigoBarras)
+	}
+	if hNumeroProducto != "880197" {
+		t.Errorf("numero_producto = %q, want 880197", hNumeroProducto)
+	}
+	if hNumeroTarima != "000999" {
+		t.Errorf("numero_tarima = %q, want 000999", hNumeroTarima)
+	}
+	if hCantidadCajas != 45 {
+		t.Errorf("cantidad_cajas = %d, want 45", hCantidadCajas)
+	}
+	if hPeso != 450.00 {
+		t.Errorf("peso = %f, want 450.00", hPeso)
+	}
+	if hNumeroVenta != "25-123456" {
+		t.Errorf("numero_venta = %q, want 25-123456", hNumeroVenta)
+	}
+	if hDescripcion != "Tarima de prueba" {
+		t.Errorf("descripcion = %q, want 'Tarima de prueba'", hDescripcion)
+	}
+	if !hIDUsuario.Valid || hIDUsuario.Int64 != adminID {
+		t.Errorf("id_usuario = %v, want %d", hIDUsuario, adminID)
+	}
+}
+
+func TestDelete_NotFound(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	_, err := repo.Delete(ctx, 99999)
+	if err == nil {
+		t.Fatal("expected error for non-existent tarima, got nil")
+	}
+
+	var historialCount int
+	err = repo.db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM historial_tarimas`).Scan(&historialCount)
+	if err != nil {
+		t.Fatalf("contar historial: %v", err)
+	}
+	if historialCount != 0 {
+		t.Errorf("historial should be empty, got %d", historialCount)
 	}
 }
