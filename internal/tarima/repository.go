@@ -7,4 +7,7 @@ type TarimaRepository interface {
 	ListAll(ctx context.Context, limit int) ([]Tarima, error)
 	ListFiltered(ctx context.Context, filters FiltrosTarima, limit int) ([]Tarima, error)
 	CountToday(ctx context.Context) (int, error)
+	Create(ctx context.Context, t *Tarima) (int64, error)
+	GetByID(ctx context.Context, id int64) (*Tarima, error)
+	Update(ctx context.Context, t *Tarima) error
 }
