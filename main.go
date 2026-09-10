@@ -165,6 +165,12 @@ func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.Au
 			middleware.NivelRequerido(store, 2)(
 				http.HandlerFunc(tarimaHandler.ActualizarTarima))))
 
+	// Tarimas — eliminación (nivel 2: supervisor)
+	mux.Handle("DELETE /tarimas/{id}",
+		middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, 2)(
+				http.HandlerFunc(tarimaHandler.EliminarTarima))))
+
 	// Dashboard (protegido: nivel 1) — lista de tarimas como home
 	mux.Handle("GET /",
 		middleware.AuthRequired(store)(
