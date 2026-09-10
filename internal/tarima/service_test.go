@@ -232,7 +232,7 @@ func TestCreate_Success(t *testing.T) {
 	svc := NewTarimaService(repo)
 
 	tarima := &Tarima{
-		CodigoBarras:   "08801970009998010104525-123456",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroUsuario:  "010",
@@ -274,7 +274,7 @@ func TestCreate_Duplicado(t *testing.T) {
 	svc := NewTarimaService(repo)
 
 	tarima := &Tarima{
-		CodigoBarras:   "08801970009998010104525-123456",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroUsuario:  "010",
@@ -323,7 +323,7 @@ func TestUpdate_Success(t *testing.T) {
 
 	tarima := &Tarima{
 		ID:             1,
-		CodigoBarras:   "08801970009998010104525-123456",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroUsuario:  "010",
@@ -347,7 +347,7 @@ func TestUpdate_Duplicado(t *testing.T) {
 
 	tarima := &Tarima{
 		ID:             1,
-		CodigoBarras:   "08801970009998010104525-123456",
+		CodigoBarras:   "088019700099999981010045045000",
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroUsuario:  "010",
