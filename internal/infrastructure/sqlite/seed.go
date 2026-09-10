@@ -42,6 +42,7 @@ type seedTarima struct {
 	numeroProducto string
 	numeroTarima   string
 	numeroUsuario  string
+	conservacion   string
 	cajas          int
 	peso           float64
 	numeroVenta    string
@@ -49,10 +50,12 @@ type seedTarima struct {
 }
 
 var seedTarimas = []seedTarima{
-	{numeroProducto: "880197", numeroTarima: "000999", numeroUsuario: "01",
-		cajas: 45, peso: 450.00, numeroVenta: "VENTA-001", descripcion: "Tarima de ejemplo 1"},
-	{numeroProducto: "880197", numeroTarima: "001000", numeroUsuario: "01",
-		cajas: 30, peso: 300.00, numeroVenta: "VENTA-002", descripcion: "Tarima de ejemplo 2"},
+	{numeroProducto: "880197", numeroTarima: "000999", numeroUsuario: "010",
+		conservacion: "1", cajas: 45, peso: 450.00, numeroVenta: "25-123456",
+		descripcion: "Tarima de ejemplo 1"},
+	{numeroProducto: "880197", numeroTarima: "001000", numeroUsuario: "011",
+		conservacion: "2", cajas: 30, peso: 300.00, numeroVenta: "25-654321",
+		descripcion: "Tarima de ejemplo 2"},
 }
 
 // Seed inserta los datos de ejemplo si la base está vacía (idempotente).
@@ -115,30 +118,30 @@ func insertUser(ctx context.Context, tx *sql.Tx, u seedUser) (int64, error) {
 }
 
 func insertTarima(ctx context.Context, tx *sql.Tx, t seedTarima, idUsuario int64) error {
-	codigoBarras, err := buildBarcode(t.numeroProducto, t.numeroTarima, t.numeroUsuario, t.cajas, t.peso)
+	codigoBarras, err := buildBarcode(t.numeroProducto, t.numeroTarima, t.numeroUsuario, t.conservacion, t.cajas, t.peso)
 	if err != nil {
 		return err
 	}
 	_, err = tx.ExecContext(ctx, `
 		INSERT INTO tarimas (codigo_barras, numero_producto, numero_tarima, numero_usuario,
-		                     cantidad_cajas, peso, numero_venta, descripcion, id_usuario)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		                     conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		codigoBarras, t.numeroProducto, t.numeroTarima, t.numeroUsuario,
-		t.cajas, t.peso, t.numeroVenta, t.descripcion, idUsuario)
+		t.conservacion, t.cajas, t.peso, t.numeroVenta, t.descripcion, idUsuario)
 	if err != nil {
 		return fmt.Errorf("insertar tarima %s: %w", t.numeroTarima, err)
 	}
 	return nil
 }
 
-// buildBarcode arma un código de barras de 30 dígitos (formato de la app PHP):
-// 1 dígito "0" + 6 de producto + 6 de tarima + "9998" + 2 de usuario + 5 + 6 de peso.
-func buildBarcode(numeroProducto, numeroTarima, numeroUsuario string, cajas int, peso float64) (string, error) {
+// buildBarcode arma un código de barras de 30 dígitos (formato de la app):
+// 1 dígito "0" + 6 de producto + 6 de tarima + "9998" + 1 de conservación + 3 de usuario + 3 de cajas + 6 de peso.
+func buildBarcode(numeroProducto, numeroTarima, numeroUsuario, conservacion string, cajas int, peso float64) (string, error) {
 	pesoCentavos := int(peso*100 + 0.5)
 	barcode := "0" +
 		numeroProducto + numeroTarima +
-		"9998" + numeroUsuario +
-		fmt.Sprintf("%05d", cajas) +
+		"9998" + conservacion + numeroUsuario +
+		fmt.Sprintf("%03d", cajas) +
 		fmt.Sprintf("%06d", pesoCentavos)
 	if len(barcode) != 30 {
 		return "", fmt.Errorf("barcode de %d dígitos, se esperaban 30", len(barcode))
