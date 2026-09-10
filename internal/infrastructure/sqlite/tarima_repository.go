@@ -115,6 +115,90 @@ func (r *SQLiteTarimaRepository) Update(ctx context.Context, t *tarima.Tarima) e
 	return nil
 }
 
+const tarimaRawCols = `
+	id, codigo_barras, numero_producto, numero_tarima, numero_usuario,
+	conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario,
+	fecha_registro, fecha`
+
+func (r *SQLiteTarimaRepository) GetByIDRaw(ctx context.Context, id int64) (*tarima.Tarima, error) {
+	query := `SELECT ` + tarimaRawCols + ` FROM tarimas WHERE id = ?`
+	row := r.db.QueryRowContext(ctx, query, id)
+
+	var t tarima.Tarima
+	var idUsuario sql.NullInt64
+	var fechaRegistroStr, fechaStr string
+	err := row.Scan(
+		&t.ID, &t.CodigoBarras, &t.NumeroProducto, &t.NumeroTarima, &t.NumeroUsuario,
+		&t.Conservacion, &t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
+		&fechaRegistroStr, &fechaStr,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if idUsuario.Valid {
+		t.IDUsuario = &idUsuario.Int64
+	}
+	t.FechaRegistro = parseSQLTimestamp(fechaRegistroStr)
+	t.Fecha = parseSQLDate(fechaStr)
+	return &t, nil
+}
+
+func (r *SQLiteTarimaRepository) Delete(ctx context.Context, id int64) (*tarima.Tarima, error) {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, fmt.Errorf("iniciar transacción: %w", err)
+	}
+	defer tx.Rollback()
+
+	var t tarima.Tarima
+	var idUsuario sql.NullInt64
+	var fechaRegistroStr, fechaStr string
+
+	err = tx.QueryRowContext(ctx, `SELECT `+tarimaRawCols+` FROM tarimas WHERE id = ?`, id).Scan(
+		&t.ID, &t.CodigoBarras, &t.NumeroProducto, &t.NumeroTarima, &t.NumeroUsuario,
+		&t.Conservacion, &t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
+		&fechaRegistroStr, &fechaStr,
+	)
+	if err != nil {
+		return nil, err
+	}
+	if idUsuario.Valid {
+		t.IDUsuario = &idUsuario.Int64
+	}
+	t.FechaRegistro = parseSQLTimestamp(fechaRegistroStr)
+	t.Fecha = parseSQLDate(fechaStr)
+
+	_, err = tx.ExecContext(ctx, `
+		INSERT INTO historial_tarimas (
+			id_tarima_eliminada, codigo_barras, numero_producto, numero_tarima,
+			numero_usuario, conservacion, cantidad_cajas, peso, numero_venta,
+			descripcion, id_usuario, fecha_registro, fecha
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		t.ID, t.CodigoBarras, t.NumeroProducto, t.NumeroTarima,
+		t.NumeroUsuario, t.Conservacion, t.CantidadCajas, t.Peso, t.NumeroVenta,
+		t.Descripcion, t.IDUsuario, t.FechaRegistro, t.Fecha)
+	if err != nil {
+		return nil, fmt.Errorf("insertar en historial: %w", err)
+	}
+
+	res, err := tx.ExecContext(ctx, `DELETE FROM tarimas WHERE id = ?`, id)
+	if err != nil {
+		return nil, fmt.Errorf("eliminar tarima: %w", err)
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return nil, fmt.Errorf("verificar eliminación: %w", err)
+	}
+	if n == 0 {
+		return nil, tarima.ErrTarimaNoEncontrada
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	return &t, nil
+}
+
 func (r *SQLiteTarimaRepository) queryTarimas(ctx context.Context, query string, limit int) ([]tarima.Tarima, error) {
 	return r.queryTarimasArgs(ctx, query, []interface{}{limit})
 }
