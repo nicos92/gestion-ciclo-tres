@@ -15,22 +15,22 @@ func newTestTarimaRepo(t *testing.T) (context.Context, *SQLiteTarimaRepository) 
 	return ctx, NewTarimaRepository(tdb.db)
 }
 
-func (r *SQLiteTarimaRepository) insertTestTarima(ctx context.Context, t *testing.T, numeroProducto, numeroTarima, numeroUsuario string, cajas int, peso float64, numeroVenta string, idUsuario *int64, fechaRegistro string) {
+func (r *SQLiteTarimaRepository) insertTestTarima(ctx context.Context, t *testing.T, numeroProducto, numeroTarima, numeroUsuario, conservacion string, cajas int, peso float64, numeroVenta string, idUsuario *int64, fechaRegistro string) {
 	t.Helper()
-	codigo, err := buildBarcode(numeroProducto, numeroTarima, numeroUsuario, cajas, peso)
+	codigo, err := buildBarcode(numeroProducto, numeroTarima, numeroUsuario, conservacion, cajas, peso)
 	if err != nil {
 		t.Fatalf("buildBarcode: %v", err)
 	}
 	venta := numeroVenta
 	if venta == "" {
-		venta = "VENTA-X"
+		venta = "25-000000"
 	}
 
 	stmt := `INSERT INTO tarimas (codigo_barras, numero_producto, numero_tarima, numero_usuario,
-	               cantidad_cajas, peso, numero_venta, id_usuario, fecha_registro)
-	       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	               conservacion, cantidad_cajas, peso, numero_venta, id_usuario, fecha_registro)
+	       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	if _, err := r.db.ExecContext(ctx, stmt,
-		codigo, numeroProducto, numeroTarima, numeroUsuario, cajas, peso, venta, idUsuario, fechaRegistro); err != nil {
+		codigo, numeroProducto, numeroTarima, numeroUsuario, conservacion, cajas, peso, venta, idUsuario, fechaRegistro); err != nil {
 		t.Fatalf("insertar tarima de test: %v", err)
 	}
 }
@@ -39,7 +39,7 @@ func TestListToday_OnlyToday(t *testing.T) {
 	ctx, repo := newTestTarimaRepo(t)
 
 	ayer := time.Now().AddDate(0, 0, -1).UTC().Format("2006-01-02 15:04:05")
-	repo.insertTestTarima(ctx, t, "100000", "100001", "50", 10, 100.5, "25-000001", nil, ayer)
+	repo.insertTestTarima(ctx, t, "100000", "100001", "050", "1", 10, 100.5, "25-000001", nil, ayer)
 
 	tarimas, err := repo.ListToday(ctx, 1000)
 	if err != nil {
@@ -55,7 +55,7 @@ func TestListAll_ReturnsAll(t *testing.T) {
 
 	ayer := time.Now().AddDate(0, 0, -1).UTC().Format("2006-01-02 15:04:05")
 	adminID := int64(1)
-	repo.insertTestTarima(ctx, t, "200000", "200001", "60", 5, 50.0, "25-000002", &adminID, ayer)
+	repo.insertTestTarima(ctx, t, "200000", "200001", "060", "2", 5, 50.0, "25-000002", &adminID, ayer)
 
 	tarimas, err := repo.ListAll(ctx, 1000)
 	if err != nil {
@@ -70,7 +70,7 @@ func TestListFiltered_ByProducto(t *testing.T) {
 	ctx, repo := newTestTarimaRepo(t)
 	adminID := int64(1)
 	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
-	repo.insertTestTarima(ctx, t, "777888", "300001", "80", 12, 80.0, "25-000003", &adminID, hoy)
+	repo.insertTestTarima(ctx, t, "777888", "300001", "080", "1", 12, 80.0, "25-000003", &adminID, hoy)
 
 	tarimas, err := repo.ListFiltered(ctx, tarima.FiltrosTarima{NumeroProducto: "777888"}, 1000)
 	if err != nil {
@@ -89,9 +89,8 @@ func TestListFiltered_ByLegajoConJoin(t *testing.T) {
 	adminID := int64(1)
 
 	ayer := time.Now().AddDate(0, 0, -1).UTC().Format("2006-01-02 15:04:05")
-	repo.insertTestTarima(ctx, t, "111222", "400001", "90", 20, 200.0, "25-000004", &adminID, ayer)
+	repo.insertTestTarima(ctx, t, "111222", "400001", "090", "1", 20, 200.0, "25-000004", &adminID, ayer)
 
-	// El admin del seed tiene legajo "A0001".
 	tarimas, err := repo.ListFiltered(ctx, tarima.FiltrosTarima{Legajo: "A0001"}, 1000)
 	if err != nil {
 		t.Fatalf("ListFiltered by legajo: %v", err)
@@ -114,7 +113,7 @@ func TestListFiltered_ByCajasMin(t *testing.T) {
 	minCajas := 40
 
 	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
-	repo.insertTestTarima(ctx, t, "333444", "500001", "10", 10, 10.0, "25-000005", nil, hoy)
+	repo.insertTestTarima(ctx, t, "333444", "500001", "010", "1", 10, 10.0, "25-000005", nil, hoy)
 
 	tarimas, err := repo.ListFiltered(ctx, tarima.FiltrosTarima{CantidadCajasMin: &minCajas}, 1000)
 	if err != nil {
@@ -134,7 +133,7 @@ func TestListFiltered_ByPesoMin(t *testing.T) {
 	minPeso := 400.0
 
 	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
-	repo.insertTestTarima(ctx, t, "555666", "600001", "20", 60, 600.0, "25-000006", nil, hoy)
+	repo.insertTestTarima(ctx, t, "555666", "600001", "020", "1", 60, 600.0, "25-000006", nil, hoy)
 
 	tarimas, err := repo.ListFiltered(ctx, tarima.FiltrosTarima{PesoMin: &minPeso}, 1000)
 	if err != nil {
@@ -153,18 +152,17 @@ func TestListFiltered_ByFecha(t *testing.T) {
 	ayerUTC := time.Now().AddDate(0, 0, -1).UTC().Format("2006-01-02 15:04:05")
 	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
 
-	repo.insertTestTarima(ctx, t, "777111", "700001", "30", 99, 999.0, "25-000007", nil, hoy)
+	repo.insertTestTarima(ctx, t, "777111", "700001", "030", "1", 99, 999.0, "25-000007", nil, hoy)
 
 	tarimas, err := repo.ListFiltered(ctx, tarima.FiltrosTarima{FechaRegistro: ayer}, 1000)
 	if err != nil {
 		t.Fatalf("ListFiltered by fecha: %v", err)
 	}
 	if len(tarimas) != 0 {
-		t.Errorf("fecha %s = %d tarimas, se esperaba 0 (la única de ayer está fuera de hoy)", ayer, len(tarimas))
+		t.Errorf("fecha %s = %d tarimas, se esperaba 0", ayer, len(tarimas))
 	}
 
-	// Insertar una con fecha de ayer y verificar que el filtro la encuentra.
-	repo.insertTestTarima(ctx, t, "777222", "700002", "31", 5, 5.0, "25-000008", nil, ayerUTC)
+	repo.insertTestTarima(ctx, t, "777222", "700002", "031", "2", 5, 5.0, "25-000008", nil, ayerUTC)
 
 	tarimas, err = repo.ListFiltered(ctx, tarima.FiltrosTarima{FechaRegistro: ayer}, 1000)
 	if err != nil {
@@ -190,9 +188,8 @@ func TestCountToday(t *testing.T) {
 func TestListLimit(t *testing.T) {
 	ctx, repo := newTestTarimaRepo(t)
 
-	// Insertar 3 tarimas extra de hoy para tener 5 en total.
 	for i := 0; i < 3; i++ {
-		repo.insertTestTarima(ctx, t, "111000", fmt.Sprintf("8000%02d", i), "11", 1, 1.0, "25-000009", nil,
+		repo.insertTestTarima(ctx, t, "111000", fmt.Sprintf("8000%02d", i), "011", "1", 1, 1.0, "25-000009", nil,
 			time.Now().UTC().Format("2006-01-02 15:04:05"))
 	}
 
@@ -202,5 +199,193 @@ func TestListLimit(t *testing.T) {
 	}
 	if len(tarimas) != 3 {
 		t.Errorf("ListToday limit 3 = %d, se esperaban 3", len(tarimas))
+	}
+}
+
+func TestCreate_Success(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	tarima := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+
+	id, err := repo.Create(ctx, tarima)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if id <= 0 {
+		t.Errorf("Create returned id = %d, want > 0", id)
+	}
+
+	created, err := repo.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByID after Create: %v", err)
+	}
+	if created.CodigoBarras != tarima.CodigoBarras {
+		t.Errorf("CodigoBarras = %q, want %q", created.CodigoBarras, tarima.CodigoBarras)
+	}
+	if created.NumeroProducto != "880197" {
+		t.Errorf("NumeroProducto = %q, want 880197", created.NumeroProducto)
+	}
+	if created.Conservacion != "1" {
+		t.Errorf("Conservacion = %q, want 1", created.Conservacion)
+	}
+}
+
+func TestTarimaCreate_Duplicado(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	tarima1 := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	_, err := repo.Create(ctx, tarima1)
+	if err != nil {
+		t.Fatalf("Create first: %v", err)
+	}
+
+	tarima2 := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	_, err = repo.Create(ctx, tarima2)
+	if err == nil {
+		t.Fatal("expected error for duplicate, got nil")
+	}
+}
+
+func TestGetByID_Exists(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	got, err := repo.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if got.NumeroProducto != "880197" {
+		t.Errorf("NumeroProducto = %q, want 880197", got.NumeroProducto)
+	}
+	if got.NumeroTarima != "000999" {
+		t.Errorf("NumeroTarima = %q, want 000999", got.NumeroTarima)
+	}
+	if got.NumeroUsuario != "010" {
+		t.Errorf("NumeroUsuario = %q, want 010", got.NumeroUsuario)
+	}
+	if got.Conservacion != "1" {
+		t.Errorf("Conservacion = %q, want 1", got.Conservacion)
+	}
+	if got.CantidadCajas != 45 {
+		t.Errorf("CantidadCajas = %d, want 45", got.CantidadCajas)
+	}
+	if got.Peso != 450.00 {
+		t.Errorf("Peso = %f, want 450.00", got.Peso)
+	}
+}
+
+func TestGetByID_NotFound(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	_, err := repo.GetByID(ctx, 99999)
+	if err == nil {
+		t.Fatal("expected error for non-existent tarima, got nil")
+	}
+}
+
+func TestUpdate_Success(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	created.ID = id
+	created.NumeroTarima = "001001"
+	created.CantidadCajas = 50
+	created.Peso = 500.00
+	created.Conservacion = "3"
+
+	if err := repo.Update(ctx, created); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	got, err := repo.GetByID(ctx, id)
+	if err != nil {
+		t.Fatalf("GetByID after Update: %v", err)
+	}
+	if got.NumeroTarima != "001001" {
+		t.Errorf("NumeroTarima = %q, want 001001", got.NumeroTarima)
+	}
+	if got.CantidadCajas != 50 {
+		t.Errorf("CantidadCajas = %d, want 50", got.CantidadCajas)
+	}
+	if got.Peso != 500.00 {
+		t.Errorf("Peso = %f, want 500.00", got.Peso)
+	}
+	if got.Conservacion != "3" {
+		t.Errorf("Conservacion = %q, want 3", got.Conservacion)
+	}
+}
+
+func TestUpdate_NotFound(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	tt := &tarima.Tarima{
+		ID:             99999,
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	err := repo.Update(ctx, tt)
+	if err != tarima.ErrTarimaNoEncontrada {
+		t.Errorf("got %v, want ErrTarimaNoEncontrada", err)
 	}
 }
