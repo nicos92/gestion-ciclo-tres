@@ -39,13 +39,5 @@
         if (cb) cb.focus();
         setTimeout(function() { if (cb) cb.focus(); }, 100);
     });
-
-    var autoDismiss = document.getElementById('auto-dismiss-alert');
-    if (autoDismiss) {
-        setTimeout(function() {
-            var alert = new bootstrap.Alert(autoDismiss);
-            alert.close();
-        }, 5000);
-    }
 </script>
 {{end}}
