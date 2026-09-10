@@ -79,7 +79,25 @@ document.addEventListener('DOMContentLoaded', function() {
     if (password) password.addEventListener('input', checkPasswordMatch);
     if (newPassword) newPassword.addEventListener('input', checkPasswordMatch);
     if (confirmPassword) confirmPassword.addEventListener('input', checkPasswordMatch);
+
+    autoDismissAlert();
+    document.body.addEventListener('htmx:afterSwap', function (evt) {
+        if (evt.detail.target && evt.detail.target.id === 'form-container') {
+            autoDismissAlert();
+        }
+    });
 });
+
+
+function autoDismissAlert() {
+    var alert = document.getElementById('auto-dismiss-alert');
+    if (alert) {
+        setTimeout(function () {
+            var bsAlert = bootstrap.Alert.getInstance(alert) || new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 5000);
+    }
+}
 
 function limpiarFiltros() {
     var ids = [
