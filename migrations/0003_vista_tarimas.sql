@@ -5,6 +5,7 @@ SELECT
     t.numero_producto,
     t.numero_tarima,
     t.numero_usuario,
+    COALESCE(t.conservacion, '') AS conservacion,
     t.cantidad_cajas,
     t.peso,
     t.numero_venta,
