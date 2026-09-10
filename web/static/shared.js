@@ -1,6 +1,6 @@
 function togglePassword(fieldId, iconId) {
-    const passwordField = document.getElementById(fieldId);
-    const icon = document.getElementById(iconId);
+    var passwordField = document.getElementById(fieldId);
+    var icon = document.getElementById(iconId);
 
     if (passwordField.type === 'password') {
         passwordField.type = 'text';
@@ -14,14 +14,14 @@ function togglePassword(fieldId, iconId) {
 }
 
 function checkPasswordMatch() {
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirmPassword');
+    var password = document.getElementById('password').value;
+    var confirmPassword = document.getElementById('confirmPassword');
     if (!confirmPassword) return;
 
-    const val = confirmPassword.value;
-    const messageDiv = document.getElementById('passwordMatchMessage');
-    const messageText = document.getElementById('passwordMatchText');
-    const passwordDivMessage = document.getElementById('passwordDivMessage');
+    var val = confirmPassword.value;
+    var messageDiv = document.getElementById('passwordMatchMessage');
+    var messageText = document.getElementById('passwordMatchText');
+    var passwordDivMessage = document.getElementById('passwordDivMessage');
 
     if (!messageDiv || !messageText || !passwordDivMessage) return;
 
@@ -43,25 +43,73 @@ function checkPasswordMatch() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    const password = document.getElementById('password');
-    const confirmPassword = document.getElementById('confirmPassword');
+    var password = document.getElementById('password');
+    var confirmPassword = document.getElementById('confirmPassword');
     if (password) password.addEventListener('input', checkPasswordMatch);
     if (confirmPassword) confirmPassword.addEventListener('input', checkPasswordMatch);
 });
 
 function limpiarFiltros() {
-    const ids = [
+    var ids = [
         'numero_producto', 'numero_tarima', 'numero_usuario', 'numero_venta',
         'fecha_registro', 'legajo', 'nombre_usuario',
         'cantidad_cajas_min', 'peso_min'
     ];
     ids.forEach(function(id) {
-        const el = document.getElementById(id);
+        var el = document.getElementById(id);
         if (el) el.value = '';
     });
     if (window.htmx) {
         htmx.trigger('#filtroTarimas', 'submit');
     } else {
         document.getElementById('filtroTarimas').submit();
+    }
+}
+
+function autoFillFromBarcode(input) {
+    var value = input.value.toString();
+    value = value.replace(/[^0-9]/g, '');
+    if (value.length > 30) {
+        value = value.substring(0, 30);
+    }
+    input.value = value;
+
+    var producto = document.getElementById('numeroProducto');
+    if (producto && value.length >= 7) {
+        producto.value = value.substring(1, 7);
+    }
+
+    if (value.length === 30) {
+        if (value.charAt(0) !== '0') {
+            return;
+        }
+        if (value.substring(13, 17) !== '9998') {
+            return;
+        }
+
+        var tarima = document.getElementById('numeroTarima');
+        var usuario = document.getElementById('numeroUsuario');
+        var conservacion = document.getElementById('conservacion');
+        var cajas = document.getElementById('cantidadCajas');
+        var peso = document.getElementById('peso');
+        var venta = document.getElementById('numeroVenta');
+
+        if (tarima) tarima.value = value.substring(7, 13);
+        if (conservacion) conservacion.value = value.substring(17, 18);
+        if (usuario) usuario.value = value.substring(18, 21);
+        if (cajas) cajas.value = parseInt(value.substring(21, 24), 10);
+
+        var lastSix = value.substring(24, 30);
+        if (lastSix.length === 6 && peso) {
+            var wholePart = lastSix.substring(0, 4);
+            var decimalPart = lastSix.substring(4, 6);
+            peso.value = wholePart + '.' + decimalPart;
+        }
+
+        var currentYear = new Date().getFullYear().toString().substr(-2);
+        if (venta) {
+            venta.value = currentYear + '-';
+            venta.focus();
+        }
     }
 }
