@@ -91,6 +91,10 @@ func (m *mockRepo) Delete(_ context.Context, id int64) (*Tarima, error) {
 	return &Tarima{ID: id, CodigoBarras: "08801970009998010100450450000025-123456"}, nil
 }
 
+func (m *mockRepo) CountAll(_ context.Context) (int, error) {
+	return 10, nil
+}
+
 func TestList_DefaultToday(t *testing.T) {
 	repo := &mockRepo{}
 	svc := NewTarimaService(repo)
