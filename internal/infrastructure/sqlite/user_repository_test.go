@@ -146,3 +146,167 @@ func TestExistsByUsernameOrEmail(t *testing.T) {
 		t.Error("expected false for non-existing user")
 	}
 }
+
+func TestUserGetByID_Exists(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	u, err := repo.GetByID(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if u.Username != "admin" {
+		t.Errorf("username = %q, want admin", u.Username)
+	}
+	if u.Rol.Nivel != 4 {
+		t.Errorf("nivel = %d, want 4", u.Rol.Nivel)
+	}
+}
+
+func TestUserGetByID_NotFound(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	_, err := repo.GetByID(ctx, 99999)
+	if err != identity.ErrUsuarioNoEncontrado {
+		t.Fatalf("expected ErrUsuarioNoEncontrado, got %v", err)
+	}
+}
+
+func TestListAll(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	list, err := repo.ListAll(ctx)
+	if err != nil {
+		t.Fatalf("ListAll: %v", err)
+	}
+	if len(list) < 2 {
+		t.Errorf("expected at least 2 users, got %d", len(list))
+	}
+	if list[0].Rol.NombreRol == "" {
+		t.Error("expected rol to be populated")
+	}
+}
+
+func TestUserUpdate_Success(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	u, err := repo.GetByID(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+
+	u.FirstName = "Admin Updated"
+	u.LastName = "Sistema Updated"
+	u.Department = "Nuevo Depto"
+
+	if err := repo.Update(ctx, u); err != nil {
+		t.Fatalf("Update: %v", err)
+	}
+
+	updated, err := repo.GetByID(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetByID after Update: %v", err)
+	}
+	if updated.FirstName != "Admin Updated" {
+		t.Errorf("first_name = %q, want Admin Updated", updated.FirstName)
+	}
+	if updated.Department != "Nuevo Depto" {
+		t.Errorf("department = %q, want Nuevo Depto", updated.Department)
+	}
+}
+
+func TestUserUpdate_NotFound(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	u := &identity.Usuario{
+		ID: 99999, Username: "noexiste", Email: "no@test.com",
+		FirstName: "No", LastName: "Existe", Legajo: "N0001",
+		Department: "Test", Rol: identity.Rol{ID: 1}, Activo: true,
+	}
+	err := repo.Update(ctx, u)
+	if err != identity.ErrUsuarioNoEncontrado {
+		t.Fatalf("expected ErrUsuarioNoEncontrado, got %v", err)
+	}
+}
+
+func TestUpdate_Duplicado(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	u, err := repo.GetByID(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+
+	u.Username = "produccion"
+	err = repo.Update(ctx, u)
+	if err != identity.ErrUsernameExiste {
+		t.Fatalf("expected ErrUsernameExiste, got %v", err)
+	}
+}
+
+func TestUpdatePassword_Success(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	err := repo.UpdatePassword(ctx, 1, "nuevohash123")
+	if err != nil {
+		t.Fatalf("UpdatePassword: %v", err)
+	}
+
+	u, err := repo.GetByID(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if u.Password != "nuevohash123" {
+		t.Errorf("password = %q, want nuevohash123", u.Password)
+	}
+}
+
+func TestUpdatePassword_NotFound(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	err := repo.UpdatePassword(ctx, 99999, "hash")
+	if err != identity.ErrUsuarioNoEncontrado {
+		t.Fatalf("expected ErrUsuarioNoEncontrado, got %v", err)
+	}
+}
+
+func TestCountAll(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	count, err := repo.CountAll(ctx)
+	if err != nil {
+		t.Fatalf("CountAll: %v", err)
+	}
+	if count < 2 {
+		t.Errorf("expected at least 2, got %d", count)
+	}
+}
+
+func TestExistsByUsernameOrEmailExcluding(t *testing.T) {
+	ctx, tdb := newTestDB(t)
+	repo := NewUserRepository(tdb.db)
+
+	exists, err := repo.ExistsByUsernameOrEmailExcluding(ctx, "admin", "admin@empresa.com", 1)
+	if err != nil {
+		t.Fatalf("ExistsByUsernameOrEmailExcluding: %v", err)
+	}
+	if exists {
+		t.Error("expected false when excluding own ID")
+	}
+
+	exists, err = repo.ExistsByUsernameOrEmailExcluding(ctx, "admin", "admin@empresa.com", 2)
+	if err != nil {
+		t.Fatalf("ExistsByUsernameOrEmailExcluding: %v", err)
+	}
+	if !exists {
+		t.Error("expected true when excluding different ID")
+	}
+}
