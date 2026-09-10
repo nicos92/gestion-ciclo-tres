@@ -104,6 +104,22 @@ func (s *TarimaService) Update(ctx context.Context, t *Tarima) error {
 	return nil
 }
 
+func (s *TarimaService) Delete(ctx context.Context, id int64) (*Tarima, error) {
+	_, err := s.repo.GetByIDRaw(ctx, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrTarimaNoEncontrada
+		}
+		return nil, err
+	}
+
+	eliminada, err := s.repo.Delete(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return eliminada, nil
+}
+
 func trimTarima(t *Tarima) {
 	t.CodigoBarras = strings.TrimSpace(t.CodigoBarras)
 	t.NumeroProducto = strings.TrimSpace(t.NumeroProducto)
