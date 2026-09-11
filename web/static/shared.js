@@ -176,9 +176,11 @@ function autoFillFromBarcode(input) {
             peso.value = wholePart + '.' + decimalPart;
         }
 
-        var currentYear = new Date().getFullYear().toString().substr(-2);
         if (venta) {
-            venta.value = currentYear + '-';
+            if (!venta.value.trim()) {
+                var currentYear = new Date().getFullYear().toString().substr(-2);
+                venta.value = currentYear + '-';
+            }
             venta.focus();
         }
     }
