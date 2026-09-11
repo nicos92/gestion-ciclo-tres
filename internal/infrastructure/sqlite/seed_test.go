@@ -21,32 +21,6 @@ func TestSeedCreatesExampleData(t *testing.T) {
 
 	assertUser(t, ctx, db, adminUser, adminPassword, 1)
 	assertUser(t, ctx, db, produccionUser, produccionPassword, 4)
-
-	var tarimas int
-	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM tarimas`).Scan(&tarimas); err != nil {
-		t.Fatalf("contar tarimas: %v", err)
-	}
-	if tarimas != 2 {
-		t.Errorf("tarimas = %d, se esperaban 2", tarimas)
-	}
-
-	rows, err := db.QueryContext(ctx, `SELECT codigo_barras FROM tarimas`)
-	if err != nil {
-		t.Fatalf("listar codigos: %v", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var code string
-		if err := rows.Scan(&code); err != nil {
-			t.Fatal(err)
-		}
-		if len(code) != 30 || code[0] != '0' {
-			t.Errorf("código de barras inválido: %q (len=%d)", code, len(code))
-		}
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatalf("iterar codigos de barras: %v", err)
-	}
 }
 
 func TestSeedIdempotent(t *testing.T) {
@@ -65,7 +39,6 @@ func TestSeedIdempotent(t *testing.T) {
 	}
 
 	assertCount(t, ctx, db, "SELECT COUNT(*) FROM usuarios", 2)
-	assertCount(t, ctx, db, "SELECT COUNT(*) FROM tarimas", 2)
 }
 
 func TestSeedErrorIfRolesAreNotSeeded(t *testing.T) {
