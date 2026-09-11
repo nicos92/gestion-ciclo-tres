@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="container my-5">
+<div class="container my-3">
     <div class="card">
         <div class="card-header d-flex flex-column align-items-start">
             <div class="d-flex justify-content-between w-100 align-items-center">
@@ -18,7 +18,12 @@
             {{if eq .Success "usuario_actualizado"}}
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>Usuario actualizado correctamente.
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button
+                    type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close"
+                ></button>
             </div>
             {{end}}
 
@@ -39,41 +44,45 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{if .Usuarios}}
-                            {{range .Usuarios}}
-                            <tr>
-                                <td>{{.ID}}</td>
-                                <td>{{.Username}}</td>
-                                <td>{{.Email}}</td>
-                                <td>{{.FirstName}} {{.LastName}}</td>
-                                <td>{{.Legajo}}</td>
-                                <td>{{.Department}}</td>
-                                <td>
-                                    {{if eq .Rol.NombreRol "administrador"}}
-                                        <span class="badge bg-danger">{{.Rol.NombreRol}}</span>
-                                    {{else}}
-                                        <span class="badge bg-success">{{.Rol.NombreRol}}</span>
-                                    {{end}}
-                                </td>
-                                <td>
-                                    {{if .Activo}}
-                                        <span class="badge bg-success">Activo</span>
-                                    {{else}}
-                                        <span class="badge bg-secondary">Inactivo</span>
-                                    {{end}}
-                                </td>
-                                <td>{{formatDate .CreatedAt}}</td>
-                                <td>
-                                    <a href="/usuarios/editar/{{.ID}}" class="btn btn-sm btn-outline-primary" title="Editar usuario">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {{end}}
-                        {{else}}
-                            <tr>
-                                <td colspan="10" class="text-center text-muted">No hay usuarios registrados aún.</td>
-                            </tr>
+                        {{if .Usuarios}} {{range .Usuarios}}
+                        <tr>
+                            <td>{{.ID}}</td>
+                            <td>{{.Username}}</td>
+                            <td>{{.Email}}</td>
+                            <td>{{.FirstName}} {{.LastName}}</td>
+                            <td>{{.Legajo}}</td>
+                            <td>{{.Department}}</td>
+                            <td>
+                                {{if eq .Rol.NombreRol "administrador"}}
+                                <span class="badge bg-danger">{{.Rol.NombreRol}}</span>
+                                {{else}}
+                                <span class="badge bg-success">{{.Rol.NombreRol}}</span>
+                                {{end}}
+                            </td>
+                            <td>
+                                {{if .Activo}}
+                                <span class="badge bg-success">Activo</span>
+                                {{else}}
+                                <span class="badge bg-secondary">Inactivo</span>
+                                {{end}}
+                            </td>
+                            <td>{{formatDate .CreatedAt}}</td>
+                            <td>
+                                <a
+                                    href="/usuarios/editar/{{.ID}}"
+                                    class="btn btn-sm btn-outline-primary"
+                                    title="Editar usuario"
+                                >
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {{end}} {{else}}
+                        <tr>
+                            <td colspan="10" class="text-center text-muted">
+                                No hay usuarios registrados aún.
+                            </td>
+                        </tr>
                         {{end}}
                     </tbody>
                 </table>
