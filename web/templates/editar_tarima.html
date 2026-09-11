@@ -22,17 +22,19 @@
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="form-card">
-                <h3 class="mb-4">Editar Tarima</h3>
-                {{if .Tarima}}
-                <p class="text-muted mb-4">Modifique los campos necesarios y guarde los cambios</p>
-                {{template "form_tarimas" .}}
-                {{else}}
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Tarima no encontrada.
-                    <a href="/tarimas" class="alert-link">Volver al inventario</a>
+            <div class="card">
+                <div class="card-body">
+                    <h3 class="mb-4">Editar Tarima</h3>
+                    {{if .Tarima}}
+                    <p class="text-muted mb-4">Modifique los campos necesarios y guarde los cambios</p>
+                    {{template "form_tarimas" .}}
+                    {{else}}
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Tarima no encontrada.
+                        <a href="/tarimas" class="alert-link">Volver al inventario</a>
+                    </div>
+                    {{end}}
                 </div>
-                {{end}}
             </div>
         </div>
     </div>
