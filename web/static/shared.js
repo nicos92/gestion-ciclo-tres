@@ -84,6 +84,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.body.addEventListener('htmx:afterSwap', function (evt) {
         if (evt.detail.target && evt.detail.target.id === 'form-container') {
             autoDismissAlert();
+            var codigoBarras = document.getElementById('codigoBarras');
+            if (codigoBarras) codigoBarras.focus();
         }
     });
 });
