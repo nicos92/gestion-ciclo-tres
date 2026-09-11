@@ -54,10 +54,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	u, err := h.auth.Login(r.Context(), username, password)
 	if err != nil {
 		if errors.Is(err, identity.ErrUsuarioInactivo) {
-			http.Redirect(w, r, "/login?error=inactive_user", http.StatusFound)
+			w.Header().Set("HX-Redirect", "/login?error=inactive_user")
+			w.WriteHeader(http.StatusOK)
 			return
 		}
-		http.Redirect(w, r, "/login?error=invalid_credentials", http.StatusFound)
+		w.Header().Set("HX-Redirect", "/login?error=invalid_credentials")
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
