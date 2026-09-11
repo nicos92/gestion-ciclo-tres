@@ -6,29 +6,36 @@
         overflow: hidden;
     }
     .btn-focus-animation:focus {
-        box-shadow: 0 0 0 0.5rem rgba(13, 110, 253, 0.25), 0 0 15px rgba(13, 110, 253, 0.5) !important;
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 15px rgba(13, 110, 253, 0.5) !important;
         outline: none;
     }
     .btn-focus-animation:hover {
-        box-shadow: 0 0 0 0.5rem rgba(13, 110, 253, 0.25), 0 0 15px rgba(13, 110, 253, 0.5);
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 15px rgba(13, 110, 253, 0.5);
     }
     .btn-focus-animation:active {
-        box-shadow: 0 0 0 0.5rem rgba(13, 110, 253, 0.25), 0 0 8px rgba(13, 110, 253, 0.7) !important;
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 8px rgba(13, 110, 253, 0.7) !important;
     }
 </style>
-{{end}}
-
-{{define "content"}}
+{{end}} {{define "content"}}
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card">
-                <div class="card-body">
+                <div class="card-header d-flex flex-column align-items-start no-print">
                     <h3 class="mb-4">Editar Tarima</h3>
                     {{if .Tarima}}
-                    <p class="text-muted mb-4">Modifique los campos necesarios y guarde los cambios</p>
-                    {{template "form_tarimas" .}}
-                    {{else}}
+                    <p class="text-muted mb-4">
+                        Modifique los campos necesarios y guarde los cambios
+                    </p>
+                </div>
+                <div class="card-body">
+                    {{template "form_tarimas" .}} {{else}}
                     <div class="alert alert-warning">
                         <i class="fas fa-exclamation-triangle me-2"></i>Tarima no encontrada.
                         <a href="/tarimas" class="alert-link">Volver al inventario</a>
