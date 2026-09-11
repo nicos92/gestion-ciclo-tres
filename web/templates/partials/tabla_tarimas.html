@@ -1,5 +1,5 @@
 {{define "tabla_tarimas"}}
-<div id="tabla-tarimas" class="card-body p-0">
+<div id="tabla-tarimas" class="card-body">
 
     {{if .Filters.HasFilters}}
     <div class="print-filters" style="display: none;">
@@ -27,9 +27,9 @@
 
     <!-- Table view for large and extra large screens -->
     <div class="table-responsive d-none d-xl-block">
-        <table class="table table-striped table-hover mb-0">
+        <table class="table table-sm table-striped table-hover mb-0">
             <thead>
-                <tr style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <tr>
                     <th>Producto</th>
                     <th>Tarima</th>
                     <th>Usuario</th>
@@ -64,7 +64,7 @@
                             <i class="fas fa-edit"></i>
                         </a>
                         {{if and $.Session (ge $.Session.Nivel 3)}}
-                        <button type="button" class="btn btn-danger btn-sm"
+                        <button type="button" class="btn btn-outline-danger btn-sm"
                             onclick="confirmarEliminar({{.ID}})"
                             title="Eliminar tarima">
                             <i class="fas fa-trash"></i>
@@ -101,7 +101,7 @@
                                 <i class="fas fa-edit"></i>
                             </a>
                             {{if and $.Session (ge $.Session.Nivel 3)}}
-                            <button type="button" class="btn btn-danger btn-sm"
+                            <button type="button" class="btn btn-outline-danger btn-sm"
                                 onclick="confirmarEliminar({{.ID}})"
                                 title="Eliminar tarima">
                                 <i class="fas fa-trash"></i>
