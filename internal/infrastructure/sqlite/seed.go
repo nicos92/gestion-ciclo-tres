@@ -38,19 +38,6 @@ var seedUsers = []seedUser{
 		department: "Producción", rolID: 4},
 }
 
-type seedTarima struct {
-	numeroProducto string
-	numeroTarima   string
-	numeroUsuario  string
-	conservacion   string
-	cajas          int
-	peso           float64
-	numeroVenta    string
-	descripcion    string
-}
-
-var seedTarimas = []seedTarima{}
-
 // Seed inserta los datos de ejemplo si la base está vacía (idempotente).
 // Los passwords se generan con bcrypt de Go; no hay hashes importados de PHP.
 func Seed(ctx context.Context, db *sql.DB) error {
@@ -80,18 +67,13 @@ func seedAll(ctx context.Context, db *sql.DB) error {
 	}
 	defer tx.Rollback()
 
-	adminID, err := insertUser(ctx, tx, seedUsers[0])
-	if err != nil {
+	if _, err := insertUser(ctx, tx, seedUsers[0]); err != nil {
 		return err
 	}
 	if _, err := insertUser(ctx, tx, seedUsers[1]); err != nil {
 		return err
 	}
-	for _, t := range seedTarimas {
-		if err := insertTarima(ctx, tx, t, adminID); err != nil {
-			return err
-		}
-	}
+
 	return tx.Commit()
 }
 
@@ -108,38 +90,6 @@ func insertUser(ctx context.Context, tx *sql.Tx, u seedUser) (int64, error) {
 		return 0, fmt.Errorf("insertar usuario %s: %w", u.username, err)
 	}
 	return res.LastInsertId()
-}
-
-func insertTarima(ctx context.Context, tx *sql.Tx, t seedTarima, idUsuario int64) error {
-	codigoBarras, err := buildBarcode(t.numeroProducto, t.numeroTarima, t.numeroUsuario, t.conservacion, t.cajas, t.peso)
-	if err != nil {
-		return err
-	}
-	_, err = tx.ExecContext(ctx, `
-		INSERT INTO tarimas (codigo_barras, numero_producto, numero_tarima, numero_usuario,
-		                     conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		codigoBarras, t.numeroProducto, t.numeroTarima, t.numeroUsuario,
-		t.conservacion, t.cajas, t.peso, t.numeroVenta, t.descripcion, idUsuario)
-	if err != nil {
-		return fmt.Errorf("insertar tarima %s: %w", t.numeroTarima, err)
-	}
-	return nil
-}
-
-// buildBarcode arma un código de barras de 30 dígitos (formato de la app):
-// 1 dígito "0" + 6 de producto + 6 de tarima + "9998" + 1 de conservación + 3 de usuario + 3 de cajas + 6 de peso.
-func buildBarcode(numeroProducto, numeroTarima, numeroUsuario, conservacion string, cajas int, peso float64) (string, error) {
-	pesoCentavos := int(peso*100 + 0.5)
-	barcode := "0" +
-		numeroProducto + numeroTarima +
-		"9998" + conservacion + numeroUsuario +
-		fmt.Sprintf("%03d", cajas) +
-		fmt.Sprintf("%06d", pesoCentavos)
-	if len(barcode) != 30 {
-		return "", fmt.Errorf("barcode de %d dígitos, se esperaban 30", len(barcode))
-	}
-	return barcode, nil
 }
 
 func count(ctx context.Context, db *sql.DB, table string) (int, error) {
