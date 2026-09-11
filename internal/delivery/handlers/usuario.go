@@ -39,13 +39,15 @@ type usuariosPageData struct {
 	Success  string
 }
 
-type editarUsuarioPageData struct {
-	Title   string
-	AppName string
-	Session *middleware.SessionData
-	Usuario *identity.Usuario
-	Error   string
-	Success string
+type usuarioFormData struct {
+	Title    string
+	AppName  string
+	Session  *middleware.SessionData
+	Usuario  *identity.Usuario
+	Error    string
+	Success  string
+	EditMode bool
+	IsAdmin  bool
 }
 
 func (h *UsuarioHandler) ShowDashboard(w http.ResponseWriter, r *http.Request) {
@@ -111,18 +113,22 @@ func (h *UsuarioHandler) ShowEditarUsuario(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	data := editarUsuarioPageData{
-		Title:   "Editar Usuario",
-		AppName: appName,
-		Session: session,
-		Usuario: u,
-		Error:   r.URL.Query().Get("error"),
-		Success: r.URL.Query().Get("success"),
+	data := usuarioFormData{
+		Title:    "Editar Usuario",
+		AppName:  appName,
+		Session:  session,
+		Usuario:  u,
+		Error:    r.URL.Query().Get("error"),
+		Success:  r.URL.Query().Get("success"),
+		EditMode: true,
+		IsAdmin:  true,
 	}
 	h.renderer.Render(w, "editar_usuario", data, http.StatusOK)
 }
 
 func (h *UsuarioHandler) ActualizarUsuario(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
 		http.Redirect(w, r, "/usuarios", http.StatusFound)
@@ -130,7 +136,7 @@ func (h *UsuarioHandler) ActualizarUsuario(w http.ResponseWriter, r *http.Reques
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error=update_failed", http.StatusFound)
+		h.renderUsuarioFormError(w, session, "", id, "update_failed")
 		return
 	}
 
@@ -145,21 +151,21 @@ func (h *UsuarioHandler) ActualizarUsuario(w http.ResponseWriter, r *http.Reques
 	activo := r.FormValue("activo") == "on"
 
 	if firstName == "" || lastName == "" || email == "" || username == "" || legajo == "" {
-		http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error=empty_fields", http.StatusFound)
+		h.renderUsuarioFormError(w, session, "empty_fields", id, "")
 		return
 	}
 
 	if newPassword != "" || confirmPassword != "" {
 		if newPassword == "" || confirmPassword == "" {
-			http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error=empty_password_fields", http.StatusFound)
+			h.renderUsuarioFormError(w, session, "empty_password_fields", id, "")
 			return
 		}
 		if newPassword != confirmPassword {
-			http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error=password_mismatch", http.StatusFound)
+			h.renderUsuarioFormError(w, session, "password_mismatch", id, "")
 			return
 		}
 		if len(newPassword) < 6 {
-			http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error=weak_password", http.StatusFound)
+			h.renderUsuarioFormError(w, session, "weak_password", id, "")
 			return
 		}
 	}
@@ -194,10 +200,36 @@ func (h *UsuarioHandler) ActualizarUsuario(w http.ResponseWriter, r *http.Reques
 		case identity.ErrCamposRequeridos:
 			errKey = "empty_fields"
 		}
-		http.Redirect(w, r, "/usuarios/editar/"+strconv.FormatInt(id, 10)+"?error="+errKey, http.StatusFound)
+		h.renderUsuarioFormError(w, session, errKey, id, "")
 		return
 	}
 
-	w.Header().Set("HX-Redirect", "/usuarios?success=usuario_actualizado")
-	w.WriteHeader(http.StatusOK)
+	updated, _ := h.auth.GetByID(r.Context(), id)
+	data := usuarioFormData{
+		Title:    "Editar Usuario",
+		AppName:  appName,
+		Session:  session,
+		Usuario:  updated,
+		Success:  "usuario_actualizado",
+		EditMode: true,
+		IsAdmin:  true,
+	}
+	h.renderer.RenderPartial(w, "form_usuario", data, http.StatusOK)
+}
+
+func (h *UsuarioHandler) renderUsuarioFormError(w http.ResponseWriter, session *middleware.SessionData, errKey string, id int64, fallbackErr string) {
+	key := errKey
+	if key == "" {
+		key = fallbackErr
+	}
+	data := usuarioFormData{
+		Title:    "Editar Usuario",
+		AppName:  appName,
+		Session:  session,
+		Usuario:  &identity.Usuario{ID: id},
+		Error:    key,
+		EditMode: true,
+		IsAdmin:  true,
+	}
+	h.renderer.RenderPartial(w, "form_usuario", data, http.StatusOK)
 }
