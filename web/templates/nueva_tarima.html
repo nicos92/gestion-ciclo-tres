@@ -6,40 +6,49 @@
         overflow: hidden;
     }
     .btn-focus-animation:focus {
-        box-shadow: 0 0 0 0.5rem rgba(13, 110, 253, 0.25), 0 0 15px rgba(13, 110, 253, 0.5) !important;
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 15px rgba(13, 110, 253, 0.5) !important;
         outline: none;
     }
     .btn-focus-animation:hover {
-        box-shadow: 0 0 0 0.5rem rgba(13, 110, 253, 0.25), 0 0 15px rgba(13, 110, 253, 0.5);
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 15px rgba(13, 110, 253, 0.5);
     }
     .btn-focus-animation:active {
-        box-shadow: 0 0 0 0.5rem rgba(13, 110, 253, 0.25), 0 0 8px rgba(13, 110, 253, 0.7) !important;
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 8px rgba(13, 110, 253, 0.7) !important;
     }
 </style>
-{{end}}
-
-{{define "content"}}
+{{end}} {{define "content"}}
 <div class="container my-5">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card">
-                <div class="card-body">
+                <div class="card-header d-flex flex-column align-items-start no-print">
                     <h3 class="mb-4">Formulario de Nueva Tarima</h3>
-                    <p class="text-muted mb-4">Complete los campos siguientes para registrar una nueva tarima en el sistema</p>
+                    <p class="text-muted mb-4">
+                        Complete los campos siguientes para registrar una nueva
+                        tarima en el sistema
+                    </p>
+                </div>
+                <div class="card-body">
                     {{template "form_tarimas" .}}
                 </div>
             </div>
         </div>
     </div>
 </div>
-{{end}}
-
-{{define "scripts"}}
+{{end}} {{define "scripts"}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var cb = document.getElementById('codigoBarras');
+    document.addEventListener("DOMContentLoaded", function () {
+        var cb = document.getElementById("codigoBarras");
         if (cb) cb.focus();
-        setTimeout(function() { if (cb) cb.focus(); }, 100);
+        setTimeout(function () {
+            if (cb) cb.focus();
+        }, 100);
     });
 </script>
 {{end}}
