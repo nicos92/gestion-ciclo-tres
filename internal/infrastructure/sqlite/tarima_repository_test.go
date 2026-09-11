@@ -16,6 +16,21 @@ func newTestTarimaRepo(t *testing.T) (context.Context, *SQLiteTarimaRepository) 
 	return ctx, NewTarimaRepository(tdb.db)
 }
 
+// buildBarcode arma un código de barras de 30 dígitos (formato de la app):
+// 1 dígito "0" + 6 de producto + 6 de tarima + "9998" + 1 de conservación + 3 de usuario + 3 de cajas + 6 de peso.
+func buildBarcode(numeroProducto, numeroTarima, numeroUsuario, conservacion string, cajas int, peso float64) (string, error) {
+	pesoCentavos := int(peso*100 + 0.5)
+	barcode := "0" +
+		numeroProducto + numeroTarima +
+		"9998" + conservacion + numeroUsuario +
+		fmt.Sprintf("%03d", cajas) +
+		fmt.Sprintf("%06d", pesoCentavos)
+	if len(barcode) != 30 {
+		return "", fmt.Errorf("barcode de %d dígitos, se esperaban 30", len(barcode))
+	}
+	return barcode, nil
+}
+
 func (r *SQLiteTarimaRepository) insertTestTarima(ctx context.Context, t *testing.T, numeroProducto, numeroTarima, numeroUsuario, conservacion string, cajas int, peso float64, numeroVenta string, idUsuario *int64, fechaRegistro string) {
 	t.Helper()
 	codigo, err := buildBarcode(numeroProducto, numeroTarima, numeroUsuario, conservacion, cajas, peso)
@@ -42,12 +57,15 @@ func TestListToday_OnlyToday(t *testing.T) {
 	ayer := time.Now().AddDate(0, 0, -1).UTC().Format("2006-01-02 15:04:05")
 	repo.insertTestTarima(ctx, t, "100000", "100001", "050", "1", 10, 100.5, "25-000001", nil, ayer)
 
+	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
+	repo.insertTestTarima(ctx, t, "100000", "100002", "050", "1", 11, 101.5, "25-000002", nil, hoy)
+
 	tarimas, err := repo.ListToday(ctx, 1000)
 	if err != nil {
 		t.Fatalf("ListToday: %v", err)
 	}
-	if len(tarimas) != 2 {
-		t.Errorf("ListToday = %d tarimas, se esperaban 2 (los del seed)", len(tarimas))
+	if len(tarimas) != 1 {
+		t.Errorf("ListToday = %d tarimas, se esperaba 1", len(tarimas))
 	}
 }
 
@@ -62,8 +80,8 @@ func TestListAll_ReturnsAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListAll: %v", err)
 	}
-	if len(tarimas) != 3 {
-		t.Errorf("ListAll = %d tarimas, se esperaban 3", len(tarimas))
+	if len(tarimas) != 1 {
+		t.Errorf("ListAll = %d tarimas, se esperaban 1", len(tarimas))
 	}
 }
 
@@ -114,18 +132,17 @@ func TestListFiltered_ByCajasMin(t *testing.T) {
 	minCajas := 40
 
 	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
-	repo.insertTestTarima(ctx, t, "333444", "500001", "010", "1", 10, 10.0, "25-000005", nil, hoy)
+	repo.insertTestTarima(ctx, t, "333444", "500001", "010", "1", 50, 10.0, "25-000005", nil, hoy)
 
 	tarimas, err := repo.ListFiltered(ctx, tarima.FiltrosTarima{CantidadCajasMin: &minCajas}, 1000)
 	if err != nil {
 		t.Fatalf("ListFiltered by cajas min: %v", err)
 	}
-	// Las 2 del seed tienen 45 y 30 cajas; la nueva tiene 10.
 	if len(tarimas) != 1 {
 		t.Errorf("ListFiltered cajas>=40 = %d, se esperaba 1", len(tarimas))
 	}
-	if tarimas[0].CantidadCajas != 45 {
-		t.Errorf("CantidadCajas = %d, want 45", tarimas[0].CantidadCajas)
+	if tarimas[0].CantidadCajas != 50 {
+		t.Errorf("CantidadCajas = %d, want 50", tarimas[0].CantidadCajas)
 	}
 }
 
@@ -140,9 +157,9 @@ func TestListFiltered_ByPesoMin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ListFiltered by peso min: %v", err)
 	}
-	// Seed: 450 y 300; nueva: 600.
-	if len(tarimas) != 2 {
-		t.Errorf("ListFiltered peso>=400 = %d, se esperaba 2", len(tarimas))
+	// Seed eliminado: solo la insertada con 600.0.
+	if len(tarimas) != 1 {
+		t.Errorf("ListFiltered peso>=400 = %d, se esperaba 1", len(tarimas))
 	}
 }
 
@@ -177,12 +194,15 @@ func TestListFiltered_ByFecha(t *testing.T) {
 func TestCountToday(t *testing.T) {
 	ctx, repo := newTestTarimaRepo(t)
 
+	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
+	repo.insertTestTarima(ctx, t, "900000", "900001", "070", "1", 12, 120.0, "25-000010", nil, hoy)
+
 	n, err := repo.CountToday(ctx)
 	if err != nil {
 		t.Fatalf("CountToday: %v", err)
 	}
-	if n != 2 {
-		t.Errorf("CountToday = %d, se esperaban 2 (del seed)", n)
+	if n != 1 {
+		t.Errorf("CountToday = %d, se esperaba 1", n)
 	}
 }
 
