@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	DefaultPort    = ":8080"
+	DefaultPort    = ":8088"
 	DefaultTZ      = "America/Argentina/Buenos_Aires"
 	DefaultAppName = "Gestión de Tarimas"
 	minPort        = 1
