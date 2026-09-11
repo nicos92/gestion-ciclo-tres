@@ -84,13 +84,12 @@
 
             .card-header .badge {
                 display: inline-block !important;
-                background: #f8f9fa !important;
                 color: #000 !important;
                 border: 1px solid #000 !important;
             }
 
             thead tr {
-                background-color: #667eea !important;
+                background-color: #212529 !important;
                 color: white !important;
             }
 
@@ -133,8 +132,7 @@
                 font-size: 8pt;
                 margin-bottom: 8px;
                 padding: 8px;
-                border: 1px solid #ccc;
-                background-color: #f9f9f9;
+                border: 1px solid var(--bs-border-color);
                 width: 100% !important;
             }
         }
@@ -144,17 +142,17 @@
 {{define "content"}}
 <div class="container my-5">
     <div class="card">
-        <div class="card-header d-flex flex-column align-items-start no-print" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+        <div class="card-header d-flex flex-column align-items-start no-print">
             <div class="d-flex justify-content-between w-100 align-items-center">
                 <h3 class="mb-0">Inventario de Tarimas</h3>
                 <div>
-                    <a href="/tarimas/nueva" class="btn btn-light me-2 m-2">
+                    <a href="/tarimas/nueva" class="btn btn-primary me-2 m-2">
                         <i class="fas fa-plus me-2"></i>Nueva Tarima
                     </a>
-                    <a href="/dashboard" class="btn btn-light me-2 m-2">
+                    <a href="/dashboard" class="btn btn-secondary me-2 m-2">
                         <i class="fas fa-arrow-left me-2"></i>Volver al Panel
                     </a>
-                    <button type="button" class="btn btn-light m-2" onclick="window.print()">
+                    <button type="button" class="btn btn-warning m-2" onclick="window.print()">
                         <i class="fas fa-print me-2"></i>Imprimir
                     </button>
                 </div>
