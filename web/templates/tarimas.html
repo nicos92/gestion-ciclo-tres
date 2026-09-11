@@ -1,146 +1,143 @@
 {{define "styles"}}
-    <style>
-        @media print {
-
-            body * {
-                visibility: hidden;
-            }
-
-            .container.my-5,
-            .container.my-5 *,
-            .table-responsive,
-            .table,
-            .table thead,
-            .table tbody,
-            .table tr,
-            .table th,
-            .table td,
-            .print-filters,
-            .card-header {
-                visibility: visible;
-            }
-
-            body {
-                visibility: visible;
-                background: white;
-                margin: 0;
-                padding: 0;
-            }
-
-            .container.my-5 {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                min-width: 100% !important;
-                margin: 0 !important;
-                padding: 15mm !important;
-            }
-
-            .table-responsive {
-                overflow: visible !important;
-                width: 100% !important;
-                min-width: 100% !important;
-                display: block !important;
-            }
-
-            @page {
-                size: A4;
-                margin: 1mm;
-            }
-
-            table {
-                width: 100% !important;
-                min-width: 100% !important;
-                border-collapse: collapse;
-                font-size: 8pt;
-                table-layout: auto;
-            }
-
-            th,
-            td {
-                border: 1px solid #000 !important;
-                padding: 6px 4px !important;
-                text-align: left;
-                word-wrap: break-word;
-                vertical-align: top;
-                width: auto !important;
-            }
-
-            .btn,
-            button,
-            [class*="btn"],
-            .card-body.border-bottom,
-            .card-body:not(.p-0) {
-                display: none !important;
-            }
-
-            .card-header {
-                display: block !important;
-                border: 1px solid #000 !important;
-                background: #fff !important;
-                color: #000 !important;
-            }
-
-            .card-header .badge {
-                display: inline-block !important;
-                color: #000 !important;
-                border: 1px solid #000 !important;
-            }
-
-            thead tr {
-                background-color: #212529 !important;
-                color: white !important;
-            }
-
-            .card,
-            .card-body {
-                box-shadow: none !important;
-                border: none !important;
-                background: white !important;
-                padding: 0 !important;
-                width: 100% !important;
-                min-width: 100% !important;
-            }
-
-            .d-none.d-xl-block {
-                display: block !important;
-            }
-
-            .d-none.d-xl-block .table-responsive {
-                display: table !important;
-                width: 100% !important;
-            }
-
-            tr {
-                page-break-inside: avoid;
-            }
-
-            thead {
-                display: table-header-group;
-            }
-
-            .no-print,
-            .no-print *,
-            .d-xl-none {
-                display: none !important;
-            }
-
-            .print-filters {
-                visibility: visible;
-                position: static;
-                font-size: 8pt;
-                margin-bottom: 8px;
-                padding: 8px;
-                border: 1px solid var(--bs-border-color);
-                width: 100% !important;
-            }
+<style>
+    @media print {
+        body * {
+            visibility: hidden;
         }
-    </style>
-{{end}}
 
-{{define "content"}}
-<div class="container my-5">
+        .container.my-5,
+        .container.my-5 *,
+        .table-responsive,
+        .table,
+        .table thead,
+        .table tbody,
+        .table tr,
+        .table th,
+        .table td,
+        .print-filters,
+        .card-header {
+            visibility: visible;
+        }
+
+        body {
+            visibility: visible;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container.my-5 {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            min-width: 100% !important;
+            margin: 0 !important;
+            padding: 15mm !important;
+        }
+
+        .table-responsive {
+            overflow: visible !important;
+            width: 100% !important;
+            min-width: 100% !important;
+            display: block !important;
+        }
+
+        @page {
+            size: A4;
+            margin: 1mm;
+        }
+
+        table {
+            width: 100% !important;
+            min-width: 100% !important;
+            border-collapse: collapse;
+            font-size: 8pt;
+            table-layout: auto;
+        }
+
+        th,
+        td {
+            border: 1px solid #000 !important;
+            padding: 6px 4px !important;
+            text-align: left;
+            word-wrap: break-word;
+            vertical-align: top;
+            width: auto !important;
+        }
+
+        .btn,
+        button,
+        [class*="btn"],
+        .card-body.border-bottom,
+        .card-body:not(.p-0) {
+            display: none !important;
+        }
+
+        .card-header {
+            display: block !important;
+            border: 1px solid #000 !important;
+            background: #fff !important;
+            color: #000 !important;
+        }
+
+        .card-header .badge {
+            display: inline-block !important;
+            color: #000 !important;
+            border: 1px solid #000 !important;
+        }
+
+        thead tr {
+            background-color: #212529 !important;
+            color: white !important;
+        }
+
+        .card,
+        .card-body {
+            box-shadow: none !important;
+            border: none !important;
+            background: white !important;
+            padding: 0 !important;
+            width: 100% !important;
+            min-width: 100% !important;
+        }
+
+        .d-none.d-xl-block {
+            display: block !important;
+        }
+
+        .d-none.d-xl-block .table-responsive {
+            display: table !important;
+            width: 100% !important;
+        }
+
+        tr {
+            page-break-inside: avoid;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        .no-print,
+        .no-print *,
+        .d-xl-none {
+            display: none !important;
+        }
+
+        .print-filters {
+            visibility: visible;
+            position: static;
+            font-size: 8pt;
+            margin-bottom: 8px;
+            padding: 8px;
+            border: 1px solid var(--bs-border-color);
+            width: 100% !important;
+        }
+    }
+</style>
+{{end}} {{define "content"}}
+<div class="container my-3">
     <div class="card">
         <div class="card-header d-flex flex-column align-items-start no-print">
             <div class="d-flex justify-content-between w-100 align-items-center">
@@ -158,64 +155,152 @@
                 </div>
             </div>
             <div class="mt-2 d-flex flex-wrap gap-2">
-                <span class="badge text-bg-warning">Tarimas ingresadas hoy: <strong>{{.CountToday}}</strong></span>
-                <span class="badge text-bg-info">Tarimas mostradas: <strong id="count-mostradas">{{len .Tarimas}}</strong></span>
+                <span class="badge text-bg-warning"
+                    >Tarimas ingresadas hoy: <strong>{{.CountToday}}</strong></span
+                >
+                <span class="badge text-bg-info"
+                    >Tarimas mostradas: <strong id="count-mostradas">{{len .Tarimas}}</strong></span
+                >
             </div>
         </div>
 
         <!-- Sección de filtrado -->
         <div class="card-body border-bottom no-print">
-            <h5 class="mb-3" data-bs-toggle="collapse" href="#filtroTarimas" role="button" aria-expanded="false" aria-controls="filtroTarimas">
+            <h5
+                class="mb-3"
+                data-bs-toggle="collapse"
+                href="#filtroTarimas"
+                role="button"
+                aria-expanded="false"
+                aria-controls="filtroTarimas"
+            >
                 <i class="fas fa-filter me-2"></i>
                 Filtros de Búsqueda
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-arrow-down-short" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4" />
+                <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    fill="currentColor"
+                    class="bi bi-arrow-down-short"
+                    viewBox="0 0 16 16"
+                >
+                    <path
+                        fill-rule="evenodd"
+                        d="M8 4a.5.5 0 0 1 .5.5v5.793l2.146-2.147a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 1 1 .708-.708L7.5 10.293V4.5A.5.5 0 0 1 8 4"
+                    />
                 </svg>
             </h5>
-            <form id="filtroTarimas" class="collapse"
-                  hx-get="/tarimas/lista"
-                  hx-target="#tabla-tarimas"
-                  hx-swap="outerHTML">
+            <form
+                id="filtroTarimas"
+                class="collapse"
+                hx-get="/tarimas/lista"
+                hx-target="#tabla-tarimas"
+                hx-swap="outerHTML"
+            >
                 <div class="row g-3">
                     <div class="col-md-3">
                         <label for="numero_producto" class="form-label">Producto</label>
-                        <input type="number" class="form-control" id="numero_producto" name="numero_producto" value="{{.Filters.NumeroProducto}}" placeholder="Buscar por producto" maxlength="6">
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="numero_producto"
+                            name="numero_producto"
+                            value="{{.Filters.NumeroProducto}}"
+                            placeholder="Buscar por producto"
+                            maxlength="6"
+                        />
                     </div>
                     <div class="col-md-3">
                         <label for="numero_tarima" class="form-label">Tarima</label>
-                        <input type="number" class="form-control" id="numero_tarima" name="numero_tarima" value="{{.Filters.NumeroTarima}}" placeholder="Buscar por número">
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="numero_tarima"
+                            name="numero_tarima"
+                            value="{{.Filters.NumeroTarima}}"
+                            placeholder="Buscar por número"
+                        />
                     </div>
                     <div class="col-md-3">
                         <label for="numero_usuario" class="form-label">Usuario</label>
-                        <input type="number" class="form-control" id="numero_usuario" name="numero_usuario" value="{{.Filters.NumeroUsuario}}" placeholder="Buscar por usuario">
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="numero_usuario"
+                            name="numero_usuario"
+                            value="{{.Filters.NumeroUsuario}}"
+                            placeholder="Buscar por usuario"
+                        />
                     </div>
                     <div class="col-md-3">
                         <label for="numero_venta" class="form-label">Venta</label>
-                        <input type="text" class="form-control" id="numero_venta" name="numero_venta" value="{{.Filters.NumeroVenta}}" placeholder="Buscar por venta">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="numero_venta"
+                            name="numero_venta"
+                            value="{{.Filters.NumeroVenta}}"
+                            placeholder="Buscar por venta"
+                        />
                     </div>
                 </div>
                 <div class="row g-3 mt-2">
                     <div class="col-md-3">
                         <label for="fecha_registro" class="form-label">Fecha de Registro</label>
-                        <input type="date" class="form-control" id="fecha_registro" name="fecha_registro" value="{{.Filters.FechaRegistro}}">
+                        <input
+                            type="date"
+                            class="form-control"
+                            id="fecha_registro"
+                            name="fecha_registro"
+                            value="{{.Filters.FechaRegistro}}"
+                        />
                     </div>
                     <div class="col-md-3">
                         <label for="legajo" class="form-label">Legajo</label>
-                        <input type="number" class="form-control" id="legajo" name="legajo" value="{{.Filters.Legajo}}" placeholder="Buscar por legajo">
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="legajo"
+                            name="legajo"
+                            value="{{.Filters.Legajo}}"
+                            placeholder="Buscar por legajo"
+                        />
                     </div>
                     <div class="col-md-3">
                         <label for="nombre_usuario" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre_usuario" name="nombre_usuario" value="{{.Filters.NombreUsuario}}" placeholder="Buscar por nombre">
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="nombre_usuario"
+                            name="nombre_usuario"
+                            value="{{.Filters.NombreUsuario}}"
+                            placeholder="Buscar por nombre"
+                        />
                     </div>
                     <div class="col-md-3">
                         <label for="cantidad_cajas_min" class="form-label">Cajas</label>
-                        <input type="number" class="form-control" id="cantidad_cajas_min" name="cantidad_cajas_min" value="{{if .Filters.CantidadCajasMin}}{{.Filters.CantidadCajasMin}}{{end}}" placeholder="Mínimo">
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="cantidad_cajas_min"
+                            name="cantidad_cajas_min"
+                            value="{{if .Filters.CantidadCajasMin}}{{.Filters.CantidadCajasMin}}{{end}}"
+                            placeholder="Mínimo"
+                        />
                     </div>
                 </div>
                 <div class="row g-3 mt-2">
                     <div class="col-md-3">
                         <label for="peso_min" class="form-label">Peso</label>
-                        <input type="number" step="0.01" class="form-control" id="peso_min" name="peso_min" value="{{if .Filters.PesoMin}}{{.Filters.PesoMin}}{{end}}" placeholder="Mínimo">
+                        <input
+                            type="number"
+                            step="0.01"
+                            class="form-control"
+                            id="peso_min"
+                            name="peso_min"
+                            value="{{if .Filters.PesoMin}}{{.Filters.PesoMin}}{{end}}"
+                            placeholder="Mínimo"
+                        />
                     </div>
                 </div>
                 <div class="row g-3 mt-3">
@@ -223,7 +308,11 @@
                         <button type="submit" class="btn btn-primary m-2">
                             <i class="fas fa-search me-2"></i>Filtrar
                         </button>
-                        <button type="button" class="btn btn-outline-secondary m-2" onclick="limpiarFiltros()">
+                        <button
+                            type="button"
+                            class="btn btn-outline-secondary m-2"
+                            onclick="limpiarFiltros()"
+                        >
                             <i class="fas fa-eraser me-2"></i>Limpiar Filtros
                         </button>
                         <a href="/tarimas?all=1" class="btn btn-success">
@@ -239,17 +328,31 @@
 </div>
 
 <!-- Modal de confirmación de eliminación -->
-<div class="modal fade" id="modalEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel" aria-hidden="true">
+<div
+    class="modal fade"
+    id="modalEliminar"
+    tabindex="-1"
+    aria-labelledby="modalEliminarLabel"
+    aria-hidden="true"
+>
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="modalEliminarLabel">
                     <i class="fas fa-exclamation-triangle me-2"></i>Confirmar Eliminación
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button
+                    type="button"
+                    class="btn-close btn-close-white"
+                    data-bs-dismiss="modal"
+                    aria-label="Close"
+                ></button>
             </div>
             <div class="modal-body">
-                <p class="mb-0">¿Estás seguro de eliminar esta tarima? Se registrará en el historial de eliminaciones.</p>
+                <p class="mb-0">
+                    ¿Estás seguro de eliminar esta tarima? Se registrará en el historial de
+                    eliminaciones.
+                </p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
