@@ -1,40 +1,98 @@
 {{define "header"}}
 {{if .Session}}
-<header class="form-header">
+<nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="mb-0"><i class="fas fa-cubes me-2"></i>Sistema de Inventario</h1>
+        <a class="navbar-brand" href="/dashboard"><i class="fas fa-cubes me-1"></i>Gestión Ciclo Tres</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
+            <div class="offcanvas-header">
+                <h5 class="offcanvas-title" id="offcanvasNavbarLabel"><i class="fas fa-cubes me-1"></i>Gestión Ciclo Tres</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-            <div class="col-md-4 text-md-end">
-                <span class="me-3">Bienvenido, <strong>{{.Session.Username}}</strong></span>
-                <button hx-post="/logout" hx-swap="none" class="btn logout-btn text-white">
-                    <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
-                </button>
+            <div class="offcanvas-body">
+                <ul class="navbar-nav justify-content-start flex-grow-1 pe-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Panel</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/tarimas">Tarimas</a>
+                    </li>
+                    {{if ge .Session.Nivel 4}}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/usuarios">Usuarios</a>
+                    </li>
+                    {{end}}
+                </ul>
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 mt-3 mt-lg-0">
+                    <span class="navbar-text">Bienvenido, <strong>{{.Session.Username}}</strong></span>
+                    <button hx-post="/logout" hx-swap="none" class="btn btn-outline-danger btn-sm mb-3 mb-lg-0">
+                        <i class="fas fa-sign-out-alt me-1"></i> Cerrar Sesión
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
-</header>
-<nav class="navbar navbar-expand-lg navbar-dark" style="background: rgba(0,0,0,0.15);">
-    <div class="container">
-        <div class="navbar-nav">
-            <a class="nav-link" href="/dashboard"><i class="fas fa-home me-1"></i>Panel</a>
-            <a class="nav-link" href="/tarimas"><i class="fas fa-boxes me-1"></i>Tarimas</a>
-            {{if ge .Session.Nivel 4}}
-            <a class="nav-link" href="/usuarios"><i class="fas fa-users me-1"></i>Usuarios</a>
-            {{end}}
+        <div class="dropdown ms-auto m-3 bd-mode-toggle">
+            <button class="btn btn-sm btn-outline-secondary d-flex align-items-center" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme (auto)">
+                <i class="fas fa-circle-half-stroke theme-icon-active"></i>
+                <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light" aria-pressed="false">
+                        <i class="fas fa-sun me-2 opacity-50 theme-icon"></i>Light
+                        <i class="fas fa-check ms-auto d-none"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+                        <i class="fas fa-moon me-2 opacity-50 theme-icon"></i>Dark
+                        <i class="fas fa-check ms-auto d-none"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto" aria-pressed="true">
+                        <i class="fas fa-circle-half-stroke me-2 opacity-50 theme-icon"></i>Auto
+                        <i class="fas fa-check ms-auto d-none"></i>
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
 </nav>
 {{else}}
-<header class="form-header">
+<nav class="navbar navbar-expand-lg bg-body-tertiary fixed-top">
     <div class="container">
-        <div class="row align-items-center">
-            <div class="col-md-8">
-                <h1 class="mb-0"><i class="fas fa-cubes me-2"></i>Sistema de Inventario</h1>
-            </div>
+        <a class="navbar-brand" href="/dashboard"><i class="fas fa-cubes me-1"></i>Gestión Ciclo Tres</a>
+        <div class="dropdown ms-auto bd-mode-toggle">
+            <button class="btn btn-sm btn-outline-secondary d-flex align-items-center" id="bd-theme" type="button" aria-expanded="false" data-bs-toggle="dropdown" aria-label="Toggle theme (auto)">
+                <i class="fas fa-circle-half-stroke theme-icon-active"></i>
+                <span class="visually-hidden" id="bd-theme-text">Toggle theme</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="bd-theme-text">
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="light" aria-pressed="false">
+                        <i class="fas fa-sun me-2 opacity-50 theme-icon"></i>Light
+                        <i class="fas fa-check ms-auto d-none"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center" data-bs-theme-value="dark" aria-pressed="false">
+                        <i class="fas fa-moon me-2 opacity-50 theme-icon"></i>Dark
+                        <i class="fas fa-check ms-auto d-none"></i>
+                    </button>
+                </li>
+                <li>
+                    <button type="button" class="dropdown-item d-flex align-items-center active" data-bs-theme-value="auto" aria-pressed="true">
+                        <i class="fas fa-circle-half-stroke me-2 opacity-50 theme-icon"></i>Auto
+                        <i class="fas fa-check ms-auto d-none"></i>
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
-</header>
+</nav>
 {{end}}
 {{end}}
