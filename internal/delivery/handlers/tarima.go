@@ -93,7 +93,7 @@ func (h *TarimaHandler) GuardarTarima(w http.ResponseWriter, r *http.Request) {
 	session := middleware.SessionFromContext(r)
 
 	if err := r.ParseForm(); err != nil {
-		h.renderFormError(w, session, "", "validation", false)
+		h.renderFormError(w, session, nil, "", "validation", false)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *TarimaHandler) GuardarTarima(w http.ResponseWriter, r *http.Request) {
 
 	_, err := h.tarima.Create(r.Context(), &t)
 	if err != nil {
-		h.renderFormError(w, session, tarimaErrorKey(err), "", false)
+		h.renderFormError(w, session, &t, tarimaErrorKey(err), "", false)
 		return
 	}
 
@@ -167,7 +167,7 @@ func (h *TarimaHandler) ActualizarTarima(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := r.ParseForm(); err != nil {
-		h.renderFormError(w, session, "", "validation", true)
+		h.renderFormError(w, session, nil, "", "validation", true)
 		return
 	}
 
@@ -255,7 +255,7 @@ func tarimaErrorKey(err error) string {
 	}
 }
 
-func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middleware.SessionData, errKey, fallbackErr string, editMode bool) {
+func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middleware.SessionData, t *tarima.Tarima, errKey, fallbackErr string, editMode bool) {
 	key := errKey
 	if key == "" {
 		key = fallbackErr
@@ -264,6 +264,7 @@ func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middlewa
 		Title:    "Nueva Tarima",
 		AppName:  appName,
 		Session:  session,
+		Tarima:   t,
 		Error:    key,
 		EditMode: editMode,
 	}
