@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -10,11 +11,12 @@ import (
 
 const (
 	DefaultPort    = ":8080"
-	DefaultDBPath  = "./data/gestiontarimas.db"
 	DefaultTZ      = "America/Argentina/Buenos_Aires"
 	DefaultAppName = "Gestión de Tarimas"
 	minPort        = 1
 	maxPort        = 65535
+	configSubdir   = "nicolas-sandoval/gestion-ciclo-tres"
+	dbFileName     = "gestion-ciclo-tres.db"
 )
 
 type Config struct {
@@ -25,9 +27,14 @@ type Config struct {
 }
 
 func Load() (Config, error) {
+	dbPath, err := defaultDBPath()
+	if err != nil {
+		return Config{}, err
+	}
+
 	cfg := Config{
 		Port:    envOr("PORT", DefaultPort),
-		DBPath:  envOr("DB_PATH", DefaultDBPath),
+		DBPath:  envOr("DB_PATH", dbPath),
 		TZ:      envOr("TZ", DefaultTZ),
 		AppName: envOr("APP_NAME", DefaultAppName),
 	}
@@ -43,6 +50,16 @@ func Load() (Config, error) {
 	}
 
 	return cfg, nil
+}
+
+// defaultDBPath devuelve la ruta de la base de datos en el directorio de
+// configuración del usuario (Linux ~/.config, Windows %APPDATA%).
+func defaultDBPath() (string, error) {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		return "", fmt.Errorf("no se pudo determinar el directorio de configuración: %w", err)
+	}
+	return filepath.Join(dir, configSubdir, dbFileName), nil
 }
 
 func envOr(key, fallback string) string {
