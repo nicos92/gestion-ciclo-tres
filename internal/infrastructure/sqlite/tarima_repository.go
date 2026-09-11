@@ -177,19 +177,6 @@ func (r *SQLiteTarimaRepository) Delete(ctx context.Context, id int64) (*tarima.
 	t.FechaRegistro = parseSQLTimestamp(fechaRegistroStr)
 	t.Fecha = parseSQLDate(fechaStr)
 
-	_, err = tx.ExecContext(ctx, `
-		INSERT INTO historial_tarimas (
-			id_tarima_eliminada, codigo_barras, numero_producto, numero_tarima,
-			numero_usuario, conservacion, cantidad_cajas, peso, numero_venta,
-			descripcion, id_usuario, fecha_registro, fecha
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		t.ID, t.CodigoBarras, t.NumeroProducto, t.NumeroTarima,
-		t.NumeroUsuario, t.Conservacion, t.CantidadCajas, t.Peso, t.NumeroVenta,
-		t.Descripcion, t.IDUsuario, t.FechaRegistro, t.Fecha)
-	if err != nil {
-		return nil, fmt.Errorf("insertar en historial: %w", err)
-	}
-
 	res, err := tx.ExecContext(ctx, `DELETE FROM tarimas WHERE id = ?`, id)
 	if err != nil {
 		return nil, fmt.Errorf("eliminar tarima: %w", err)

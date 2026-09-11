@@ -69,8 +69,8 @@ func TestMigrateAppliesMigrations(t *testing.T) {
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations`).Scan(&versionCount); err != nil {
 		t.Fatalf("contar versiones: %v", err)
 	}
-	if versionCount != 3 {
-		t.Errorf("versiones aplicadas = %d, se esperaban 3", versionCount)
+	if versionCount != 4 {
+		t.Errorf("versiones aplicadas = %d, se esperaban 4", versionCount)
 	}
 
 	for _, table := range []string{"roles", "usuarios", "tarimas", "historial_tarimas"} {
@@ -91,6 +91,15 @@ func TestMigrateAppliesMigrations(t *testing.T) {
 	}
 	if viewCount != 1 {
 		t.Errorf("no existe la vista vista_tarimas_con_legajo")
+	}
+
+	var triggerCount int
+	if err := db.QueryRowContext(ctx,
+		`SELECT COUNT(*) FROM sqlite_master WHERE type='trigger' AND name='trg_historial_tarimas'`).Scan(&triggerCount); err != nil {
+		t.Fatalf("buscar trigger: %v", err)
+	}
+	if triggerCount != 1 {
+		t.Errorf("no existe el trigger trg_historial_tarimas")
 	}
 
 	var roles int
@@ -118,7 +127,7 @@ func TestMigrateIdempotent(t *testing.T) {
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations`).Scan(&count); err != nil {
 		t.Fatalf("contar versiones: %v", err)
 	}
-	if count != 3 {
-		t.Errorf("versiones = %d tras re-ejecutar, se esperaban 3", count)
+	if count != 4 {
+		t.Errorf("versiones = %d tras re-ejecutar, se esperaban 4", count)
 	}
 }
