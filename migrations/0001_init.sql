@@ -24,7 +24,7 @@ CREATE TABLE usuarios (
 
 CREATE TABLE tarimas (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo_barras   TEXT UNIQUE NOT NULL,
+    codigo_barras   TEXT NOT NULL,
     numero_producto TEXT NOT NULL,
     numero_tarima   TEXT NOT NULL,
     numero_usuario  TEXT NOT NULL,
@@ -36,6 +36,7 @@ CREATE TABLE tarimas (
     id_usuario      INTEGER,
     fecha_registro  DATETIME DEFAULT CURRENT_TIMESTAMP,
     fecha           DATE DEFAULT (date('now')),
+    UNIQUE (codigo_barras, fecha),
     FOREIGN KEY (id_usuario) REFERENCES usuarios (id) ON DELETE SET NULL
 );
 
