@@ -82,20 +82,15 @@ func (h *AuthHandler) ShowRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.renderer.Render(w, "register", struct {
-		Title   string
-		AppName string
-		Error   string
-		Success bool
-		IsAdmin bool
-		Session *middleware.SessionData
-	}{
-		Title:   "Registrar Usuario",
-		AppName: "Gestión de Tarimas",
-		Error:   r.URL.Query().Get("error"),
-		Success: r.URL.Query().Get("success") == "true",
-		IsAdmin: session.Nivel >= 4,
-		Session: session,
+	h.renderer.Render(w, "register", usuarioFormData{
+		Title:    "Registrar Usuario",
+		AppName:  appName,
+		Error:    r.URL.Query().Get("error"),
+		Success:  r.URL.Query().Get("success"),
+		Usuario:  &identity.Usuario{},
+		IsAdmin:  session.Nivel >= 4,
+		Session:  session,
+		EditMode: false,
 	}, http.StatusOK)
 }
 
@@ -111,7 +106,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := r.ParseForm(); err != nil {
-		http.Redirect(w, r, "/register?error=empty_fields", http.StatusFound)
+		h.renderRegisterError(w, session, "empty_fields")
 		return
 	}
 
@@ -125,12 +120,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	department := r.FormValue("department")
 
 	if firstName == "" || lastName == "" || email == "" || username == "" || legajo == "" || password == "" || confirmPassword == "" || department == "" {
-		http.Redirect(w, r, "/register?error=empty_fields", http.StatusFound)
+		h.renderRegisterError(w, session, "empty_fields")
 		return
 	}
 
 	if password != confirmPassword {
-		http.Redirect(w, r, "/register?error=password_mismatch", http.StatusFound)
+		h.renderRegisterError(w, session, "password_mismatch")
 		return
 	}
 
@@ -165,19 +160,32 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		slog.Warn("registro fallido", "error", err)
 		if errors.Is(err, identity.ErrUsernameExiste) || errors.Is(err, identity.ErrEmailExiste) {
-			http.Redirect(w, r, "/register?error=user_exists", http.StatusFound)
+			h.renderRegisterError(w, session, "user_exists")
 			return
 		}
 		if errors.Is(err, identity.ErrEmailInvalido) {
-			http.Redirect(w, r, "/register?error=invalid_email", http.StatusFound)
+			h.renderRegisterError(w, session, "invalid_email")
 			return
 		}
-		http.Redirect(w, r, "/register?error=registration_failed", http.StatusFound)
+		h.renderRegisterError(w, session, "registration_failed")
 		return
 	}
 
 	w.Header().Set("HX-Redirect", "/usuarios?success=usuario_actualizado")
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *AuthHandler) renderRegisterError(w http.ResponseWriter, session *middleware.SessionData, errKey string) {
+	data := usuarioFormData{
+		Title:    "Registrar Usuario",
+		AppName:  appName,
+		Session:  session,
+		Usuario:  &identity.Usuario{},
+		Error:    errKey,
+		EditMode: false,
+		IsAdmin:  session.Nivel >= 4,
+	}
+	h.renderer.RenderPartial(w, "form_usuario", data, http.StatusOK)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
