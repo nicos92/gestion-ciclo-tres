@@ -49,14 +49,7 @@ type seedTarima struct {
 	descripcion    string
 }
 
-var seedTarimas = []seedTarima{
-	{numeroProducto: "880197", numeroTarima: "000999", numeroUsuario: "010",
-		conservacion: "1", cajas: 45, peso: 450.00, numeroVenta: "25-123456",
-		descripcion: "Tarima de ejemplo 1"},
-	{numeroProducto: "880197", numeroTarima: "001000", numeroUsuario: "011",
-		conservacion: "2", cajas: 30, peso: 300.00, numeroVenta: "25-654321",
-		descripcion: "Tarima de ejemplo 2"},
-}
+var seedTarimas = []seedTarima{}
 
 // Seed inserta los datos de ejemplo si la base está vacía (idempotente).
 // Los passwords se generan con bcrypt de Go; no hay hashes importados de PHP.
