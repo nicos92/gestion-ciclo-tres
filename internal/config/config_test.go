@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -18,8 +20,13 @@ func TestDefaults(t *testing.T) {
 	if cfg.Port != DefaultPort {
 		t.Errorf("Port = %q, want %q", cfg.Port, DefaultPort)
 	}
-	if cfg.DBPath != DefaultDBPath {
-		t.Errorf("DBPath = %q, want %q", cfg.DBPath, DefaultDBPath)
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		t.Fatalf("os.UserConfigDir() error = %v", err)
+	}
+	wantDBPath := filepath.Join(dir, configSubdir, dbFileName)
+	if cfg.DBPath != wantDBPath {
+		t.Errorf("DBPath = %q, want %q", cfg.DBPath, wantDBPath)
 	}
 	if cfg.TZ != DefaultTZ {
 		t.Errorf("TZ = %q, want %q", cfg.TZ, DefaultTZ)
