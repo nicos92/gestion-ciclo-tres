@@ -248,6 +248,8 @@ func tarimaErrorKey(err error) string {
 		return "barcode_prefix"
 	case err == tarima.ErrBarcodeMarker:
 		return "barcode_marker"
+	case err == tarima.ErrBarcodeNoCoincide:
+		return "barcode_mismatch"
 	default:
 		return "validation"
 	}

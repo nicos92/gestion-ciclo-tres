@@ -288,6 +288,53 @@ func TestCreate_Duplicado(t *testing.T) {
 	}
 }
 
+func TestCreate_BarcodeNoCoincide(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "111111",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	_, err := svc.Create(context.Background(), tarima)
+	if err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+	if repo.createCalled {
+		t.Error("repo.Create should not be called when barcode does not match fields")
+	}
+}
+
+func TestCreate_AutoRellenoDesdeBarcode(t *testing.T) {
+	repo := &mockRepo{createID: 11}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		CodigoBarras: "088019700099999981010045045000",
+		NumeroVenta:  "25-123456",
+	}
+	id, err := svc.Create(context.Background(), tarima)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if id != 11 {
+		t.Errorf("id = %d, want 11", id)
+	}
+	if tarima.NumeroProducto != "880197" ||
+		tarima.NumeroTarima != "000999" ||
+		tarima.NumeroUsuario != "010" ||
+		tarima.Conservacion != "1" ||
+		tarima.CantidadCajas != 45 ||
+		tarima.Peso != 450.00 {
+		t.Errorf("campos no auto-rellenados correctamente: %+v", tarima)
+	}
+}
+
 func TestGetByID_Success(t *testing.T) {
 	repo := &mockRepo{}
 	svc := NewTarimaService(repo)
@@ -351,6 +398,7 @@ func TestUpdate_Duplicado(t *testing.T) {
 		NumeroProducto: "880197",
 		NumeroTarima:   "000999",
 		NumeroUsuario:  "010",
+		Conservacion:   "1",
 		CantidadCajas:  45,
 		Peso:           450.00,
 		NumeroVenta:    "25-123456",
@@ -358,6 +406,29 @@ func TestUpdate_Duplicado(t *testing.T) {
 	err := svc.Update(context.Background(), tarima)
 	if err != ErrCodigoBarrasDuplicado {
 		t.Errorf("got %v, want ErrCodigoBarrasDuplicado", err)
+	}
+}
+
+func TestUpdate_BarcodeNoCoincide(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	tarima := &Tarima{
+		ID:             1,
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		CantidadCajas:  45,
+		Peso:           999.99,
+		NumeroVenta:    "25-123456",
+	}
+	err := svc.Update(context.Background(), tarima)
+	if err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+	if repo.updateCalled {
+		t.Error("repo.Update should not be called when barcode does not match fields")
 	}
 }
 

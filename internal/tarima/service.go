@@ -67,6 +67,10 @@ func (s *TarimaService) Create(ctx context.Context, t *Tarima) (int64, error) {
 		}
 	}
 
+	if err := ValidateBarcodeConsistency(t); err != nil {
+		return 0, err
+	}
+
 	if err := ValidateTarima(t); err != nil {
 		return 0, err
 	}
@@ -94,6 +98,10 @@ func (s *TarimaService) GetByID(ctx context.Context, id int64) (*Tarima, error) 
 
 func (s *TarimaService) Update(ctx context.Context, t *Tarima) error {
 	trimTarima(t)
+
+	if err := ValidateBarcodeConsistency(t); err != nil {
+		return err
+	}
 
 	if err := ValidateTarima(t); err != nil {
 		return err

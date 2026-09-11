@@ -20,6 +20,7 @@ var (
 	ErrPesoRango             = errors.New("el peso debe ser entre 0 y 9999.99")
 	ErrNumeroVentaMax        = errors.New("el número de venta no puede tener más de 9 caracteres")
 	ErrCodigoBarrasDuplicado = errors.New("ya existe una tarima registrada con este código de barras")
+	ErrBarcodeNoCoincide     = errors.New("el código de barras no coincide con los campos del formulario")
 	ErrTarimaNoEncontrada    = errors.New("tarima no encontrada")
 )
 

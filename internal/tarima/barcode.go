@@ -2,6 +2,7 @@ package tarima
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -43,4 +44,25 @@ func ParseBarcode(raw string) (BarcodeData, error) {
 		CantidadCajas:  cajas,
 		Peso:           float64(pesoCentavos) / 100.0,
 	}, nil
+}
+
+func ValidateBarcodeConsistency(t *Tarima) error {
+	if len(t.CodigoBarras) != 30 {
+		return nil
+	}
+	bd, err := ParseBarcode(t.CodigoBarras)
+	if err != nil {
+		return nil
+	}
+	pesoCents := int(math.Round(t.Peso * 100))
+	pesoCentsBD := int(math.Round(bd.Peso * 100))
+	if t.NumeroProducto != bd.NumeroProducto ||
+		t.NumeroTarima != bd.NumeroTarima ||
+		t.NumeroUsuario != bd.NumeroUsuario ||
+		t.Conservacion != bd.Conservacion ||
+		t.CantidadCajas != bd.CantidadCajas ||
+		pesoCents != pesoCentsBD {
+		return ErrBarcodeNoCoincide
+	}
+	return nil
 }

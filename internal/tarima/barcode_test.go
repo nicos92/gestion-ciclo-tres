@@ -224,3 +224,123 @@ func TestValidateTarimaBarcodeMarker(t *testing.T) {
 		t.Errorf("got %v, want ErrBarcodeMarker", err)
 	}
 }
+
+func TestValidateBarcodeConsistencyConsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != nil {
+		t.Errorf("ValidateBarcodeConsistency: %v", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyProductoInconsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "111111",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyTarimaInconsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "999999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyUsuarioInconsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "999",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyConservacionInconsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "0",
+		CantidadCajas:  45,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyCajasInconsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  10,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyPesoInconsistente(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "088019700099999981010045045000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           999.99,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != ErrBarcodeNoCoincide {
+		t.Errorf("got %v, want ErrBarcodeNoCoincide", err)
+	}
+}
+
+func TestValidateBarcodeConsistencyBarcodeCorto(t *testing.T) {
+	tarima := &Tarima{
+		CodigoBarras:   "08801970009999998101004504500",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+	}
+	if err := ValidateBarcodeConsistency(tarima); err != nil {
+		t.Errorf("ValidateBarcodeConsistency: %v", err)
+	}
+}
