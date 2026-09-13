@@ -1,0 +1,22 @@
+[Unit]
+Description=Gestión Ciclo Tres
+After=network.target
+
+[Service]
+Type=simple
+User=gestion
+Group=gestion
+WorkingDirectory=/var/lib/gestion-ciclo-tres
+Environment=PORT=:8088
+Environment=DB_PATH=/var/lib/gestion-ciclo-tres/gestion-ciclo-tres.db
+Environment=TZ=America/Argentina/Buenos_Aires
+Environment="APP_NAME=Gestión Ciclo Tres"
+ExecStart=/usr/local/bin/gestion-ciclo-tres
+Restart=on-failure
+RestartSec=5
+# Protección básica
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
