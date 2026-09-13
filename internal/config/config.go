@@ -12,7 +12,7 @@ import (
 const (
 	DefaultPort    = ":8088"
 	DefaultTZ      = "America/Argentina/Buenos_Aires"
-	DefaultAppName = "Gestión de Tarimas"
+	DefaultAppName = "Gestión Ciclo Tres"
 	minPort        = 1
 	maxPort        = 65535
 	configSubdir   = "nicolas-sandoval/gestion-ciclo-tres"

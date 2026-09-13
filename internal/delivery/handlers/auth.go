@@ -37,7 +37,7 @@ func (h *AuthHandler) ShowLogin(w http.ResponseWriter, r *http.Request) {
 
 	h.renderer.Render(w, "login", loginPageData{
 		Title:   "Iniciar Sesión",
-		AppName: "Gestión de Tarimas",
+		AppName: "Gestión Ciclo Tres",
 		Error:   r.URL.Query().Get("error"),
 	}, http.StatusOK)
 }

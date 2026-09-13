@@ -41,7 +41,7 @@ type tarimaFormData struct {
 	EditMode bool
 }
 
-const appName = "Gestión de Tarimas"
+const appName = "Gestión Ciclo Tres"
 
 func (h *TarimaHandler) ListarTarimas(w http.ResponseWriter, r *http.Request) {
 	session := middleware.SessionFromContext(r)
