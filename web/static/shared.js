@@ -57,10 +57,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (tarimaIdPendiente !== null) {
                 var modal = bootstrap.Modal.getInstance(document.getElementById('modalEliminar'));
                 if (modal) modal.hide();
-                htmx.ajax('DELETE', '/tarimas/' + tarimaIdPendiente, {
-                    target: '#tarima-' + tarimaIdPendiente,
-                    swap: 'delete'
-                });
+                var id = tarimaIdPendiente;
+                var row = document.getElementById('tarima-row-' + id);
+                var card = document.getElementById('tarima-card-' + id);
+                var target = row || card;
+
+                if (target) {
+                    htmx.ajax('DELETE', '/tarimas/' + id, {
+                        target: target,
+                        swap: 'delete'
+                    }).then(function() {
+                        var other = (target === row) ? card : row;
+                        if (other) other.remove();
+                    });
+                }
                 tarimaIdPendiente = null;
             }
         });
