@@ -128,6 +128,23 @@ function limpiarFiltros() {
     }
 }
 
+function limpiarFiltrosHistorial() {
+    var ids = [
+        'numero_producto', 'numero_tarima', 'numero_usuario', 'numero_venta',
+        'fecha_registro', 'fecha_eliminacion', 'legajo', 'nombre_usuario',
+        'cantidad_cajas_min', 'peso_min'
+    ];
+    ids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+    if (window.htmx) {
+        htmx.trigger('#filtroHistorial', 'submit');
+    } else {
+        document.getElementById('filtroHistorial').submit();
+    }
+}
+
 function autoFillFromBarcode(input) {
     var value = input.value.toString();
     value = value.replace(/[^0-9]/g, '');
