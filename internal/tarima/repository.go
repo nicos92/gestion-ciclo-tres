@@ -13,4 +13,5 @@ type TarimaRepository interface {
 	GetByIDRaw(ctx context.Context, id int64) (*Tarima, error)
 	Update(ctx context.Context, t *Tarima) error
 	Delete(ctx context.Context, id int64) (*Tarima, error)
+	ListHistorial(ctx context.Context, filters FiltrosHistorial, limit int) ([]TarimaEliminada, error)
 }
