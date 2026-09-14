@@ -116,6 +116,15 @@ func (s *TarimaService) Update(ctx context.Context, t *Tarima) error {
 	return nil
 }
 
+func (s *TarimaService) ListHistorial(ctx context.Context, filters FiltrosHistorial, limit int) ([]TarimaEliminada, error) {
+	if limit <= 0 {
+		limit = DefaultLimit
+	} else if limit > MaxLimit {
+		limit = MaxLimit
+	}
+	return s.repo.ListHistorial(ctx, filters, limit)
+}
+
 func (s *TarimaService) Delete(ctx context.Context, id int64) (*Tarima, error) {
 	_, err := s.repo.GetByIDRaw(ctx, id)
 	if err != nil {
