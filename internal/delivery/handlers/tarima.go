@@ -239,16 +239,16 @@ func (h *TarimaHandler) EliminarTarima(w http.ResponseWriter, r *http.Request) {
 }
 
 func tarimaErrorKey(err error) string {
-	switch {
-	case err == tarima.ErrCodigoBarrasDuplicado:
+	switch err {
+	case tarima.ErrCodigoBarrasDuplicado:
 		return "duplicate"
-	case err == tarima.ErrBarcodeLongitud:
+	case tarima.ErrBarcodeLongitud:
 		return "barcode_length"
-	case err == tarima.ErrBarcodePrefix:
+	case tarima.ErrBarcodePrefix:
 		return "barcode_prefix"
-	case err == tarima.ErrBarcodeMarker:
+	case tarima.ErrBarcodeMarker:
 		return "barcode_marker"
-	case err == tarima.ErrBarcodeNoCoincide:
+	case tarima.ErrBarcodeNoCoincide:
 		return "barcode_mismatch"
 	default:
 		return "validation"
