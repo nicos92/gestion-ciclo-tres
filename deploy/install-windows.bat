@@ -1,15 +1,16 @@
 @echo off
 REM ============================================================
-REM  Instala gestion-ciclo-tres como servicio Windows via NSSM
+REM  Instala gestion-ciclo-tres como servicio nativo de Windows
+REM  (SIN NSSM: se usa el SCM via sc.exe)
 REM  Requiere:
+REM    - Ejecutarse como Administrador
 REM    - Go instalado (para compilar) o un binario ya compilado
-REM    - NSSM (https://nssm.cc) disponible en el PATH o en NSSM_EXE
 REM  Uso:  install-windows.bat [ruta_al_exe]
 REM ============================================================
 setlocal enabledelayedexpansion
 
 set "SVCCNAME=gestion-ciclo-tres"
-set "DISPLAYNAME=Gestión Ciclo Tres"
+set "DISPLAYNAME=Gestion Ciclo Tres"
 set "SCRIPT_DIR=%~dp0"
 set "REPO_ROOT=%SCRIPT_DIR%.."
 set "INSTALL_DIR=C:\gestion-ciclo-tres"
@@ -17,9 +18,8 @@ set "DATA_DIR=%INSTALL_DIR%\data"
 set "LOG_DIR=%INSTALL_DIR%\logs"
 set "EXE_PATH=%~1"
 
-if "%NSSM_EXE%"=="" (set "NSSM_EXE=nssm")
-where "%NSSM_EXE%" >nul 2>nul || (
-  echo [ERROR] NSSM no encontrado en el PATH. Descargalo de https://nssm.cc o setea NSSM_EXE.>&2
+net session >nul 2>nul || (
+  echo [ERROR] Debes ejecutar este script como Administrador.>&2
   exit /b 1
 )
 
@@ -50,29 +50,38 @@ if "%EXE_PATH%"=="" (
   )
 )
 
-echo ==^> Instalando servicio "%SVCCNAME%"...
-"%NSSM_EXE%" install "%SVCCNAME%" "%EXE_PATH%"
-if errorlevel 1 exit /b 1
+REM ---- 2) Quitar el servicio previo si existe ------------------
+sc query "%SVCCNAME%" >nul 2>nul
+if not errorlevel 1 (
+  echo ==^> Removiendo servicio existente...
+  sc stop "%SVCCNAME%" >nul 2>nul
+  sc delete "%SVCCNAME%" >nul 2>nul
+  timeout /t 2 /nobreak >nul
+)
 
-"%NSSM_EXE%" set "%SVCCNAME%" DisplayName "%DISPLAYNAME%"
-"%NSSM_EXE%" set "%SVCCNAME%" Description "Gestión Ciclo Tres"
-"%NSSM_EXE%" set "%SVCCNAME%" AppDirectory "%INSTALL_DIR%"
-"%NSSM_EXE%" set "%SVCCNAME%" Start SERVICE_AUTO_START
-"%NSSM_EXE%" set "%SVCCNAME%" AppStdout "%LOG_DIR%\stdout.log"
-"%NSSM_EXE%" set "%SVCCNAME%" AppStderr "%LOG_DIR%\stderr.log"
-"%NSSM_EXE%" set "%SVCCNAME%" AppRotateFiles 1
-"%NSSM_EXE%" set "%SVCCNAME%" AppRotateOnline 1
+REM ---- 3) Crear el servicio ------------------------------------
+echo ==^> Creando servicio "%SVCCNAME%"...
+sc create "%SVCCNAME%" binPath= "\"%EXE_PATH%\"" start= auto DisplayName= "%DISPLAYNAME%"
+if errorlevel 1 (
+  echo [ERROR] Fallo al crear el servicio. Revisa la ruta del exe y los permisos.>&2
+  exit /b 1
+)
 
+sc description "%SVCCNAME%" "Gestion Ciclo Tres: gestion de tarimas"
+REM Reinicio automático ante fallas (reset=1dia, 3 reintentos progresivos)
+sc failure "%SVCCNAME%" reset= 86400 actions= restart/5000/restart/10000/restart/30000
+
+REM ---- 4) Variables de entorno del servicio -------------------
+REM Se escriben en el registro (REG_MULTI_SZ). Son las mismas de internal/config.
 echo ==^> Seteando variables de entorno del servicio...
-REM Cada KEY=VALUE va como argumento separado; los valores con espacios van entre comillas.
-"%NSSM_EXE%" set "%SVCCNAME%" AppEnvironmentExtra ^
-  "PORT=:8088" ^
-  "DB_PATH=%DATA_DIR%\gestion-ciclo-tres.db" ^
-  "TZ=America/Argentina/Buenos_Aires" ^
-  "APP_NAME=Gestión Ciclo Tres"
+powershell -NoProfile -Command "Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\gestion-ciclo-tres' -Name Environment -Type MultiString -Value @('PORT=:8088'; 'DB_PATH=C:\gestion-ciclo-tres\data\gestion-ciclo-tres.db'; 'TZ=America/Argentina/Buenos_Aires'; 'APP_NAME=Gestion Ciclo Tres'; 'LOG_FILE=C:\gestion-ciclo-tres\logs\gestion-ciclo-tres.log')"
+if errorlevel 1 (
+  echo [ERROR] Fallo al configurar las variables de entorno del servicio.>&2
+  exit /b 1
+)
 
 echo ==^> Arrancando el servicio...
-"%NSSM_EXE%" start "%SVCCNAME%"
+sc start "%SVCCNAME%" >nul 2>nul
 if errorlevel 1 (
   echo [ERROR] No se pudo iniciar el servicio. Revisar logs en %LOG_DIR%.>&2
   exit /b 1
@@ -85,9 +94,10 @@ echo   - Ejecutable............... %EXE_PATH%
 echo   - Base de datos............ %DATA_DIR%\gestion-ciclo-tres.db
 echo   - Logs..................... %LOG_DIR%
 echo   - URL...................... http://localhost:8088
-echo Ver estado:    nssm status %SVCCNAME%
-echo Ver logs:      nssm log %SVCCNAME%   (o revisar %LOG_DIR%)
-echo Parar:         nssm stop %SVCCNAME%
-echo Reiniciar:     nssm restart %SVCCNAME%
-echo Desinstalar:   desinstalar-windows.bat   (o nssm remove %SVCCNAME% confirm)
+echo Ver estado:    sc query %SVCCNAME%
+echo Ver logs:      C:\gestion-ciclo-tres\logs\gestion-ciclo-tres.log  (o Visor de eventos)
+echo Parar:         sc stop %SVCCNAME%
+echo Arrancar:      sc start %SVCCNAME%
+echo Reiniciar:     sc stop %SVCCNAME% ^&^& sc start %SVCCNAME%
+echo Desinstalar:   desinstalar-windows.bat
 exit /b 0
