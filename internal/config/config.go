@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	_ "time/tzdata"
 )
 
 const (
@@ -24,6 +25,7 @@ type Config struct {
 	DBPath  string
 	TZ      string
 	AppName string
+	LogFile string
 }
 
 func Load() (Config, error) {
@@ -37,6 +39,7 @@ func Load() (Config, error) {
 		DBPath:  envOr("DB_PATH", dbPath),
 		TZ:      envOr("TZ", DefaultTZ),
 		AppName: envOr("APP_NAME", DefaultAppName),
+		LogFile: os.Getenv("LOG_FILE"),
 	}
 
 	port, err := normalizePort(cfg.Port)
