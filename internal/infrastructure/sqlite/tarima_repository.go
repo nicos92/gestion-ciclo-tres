@@ -301,3 +301,100 @@ func parseSQLDate(s string) time.Time {
 	}
 	return t
 }
+
+const historialSelectCols = `
+	id, id_tarima_eliminada, codigo_barras, numero_producto, numero_tarima, numero_usuario,
+	conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario,
+	fecha_registro, fecha, fecha_eliminacion, legajo, nombre_usuario`
+
+func (r *SQLiteTarimaRepository) ListHistorial(ctx context.Context, filters tarima.FiltrosHistorial, limit int) ([]tarima.TarimaEliminada, error) {
+	query, args := buildHistorialFilterQuery(filters, limit)
+	return r.queryHistorialEliminadas(ctx, query, args)
+}
+
+func (r *SQLiteTarimaRepository) queryHistorialEliminadas(ctx context.Context, query string, args []interface{}) ([]tarima.TarimaEliminada, error) {
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("consultar historial: %w", err)
+	}
+	defer rows.Close()
+
+	var result []tarima.TarimaEliminada
+	for rows.Next() {
+		var h tarima.TarimaEliminada
+		var idUsuario sql.NullInt64
+		var fechaRegistroStr, fechaStr, fechaElimStr string
+		if err := rows.Scan(
+			&h.ID, &h.IDTarimaEliminada, &h.CodigoBarras, &h.NumeroProducto,
+			&h.NumeroTarima, &h.NumeroUsuario, &h.Conservacion, &h.CantidadCajas,
+			&h.Peso, &h.NumeroVenta, &h.Descripcion, &idUsuario,
+			&fechaRegistroStr, &fechaStr, &fechaElimStr, &h.Legajo, &h.NombreUsuario,
+		); err != nil {
+			return nil, fmt.Errorf("leer fila historial: %w", err)
+		}
+		if idUsuario.Valid {
+			h.IDUsuario = &idUsuario.Int64
+		}
+		h.FechaRegistro = parseSQLTimestamp(fechaRegistroStr)
+		h.Fecha = parseSQLDate(fechaStr)
+		h.FechaEliminacion = parseSQLTimestamp(fechaElimStr)
+		result = append(result, h)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterar historial: %w", err)
+	}
+	return result, nil
+}
+
+func buildHistorialFilterQuery(filters tarima.FiltrosHistorial, limit int) (string, []interface{}) {
+	var sb strings.Builder
+	var args []interface{}
+
+	sb.WriteString(`SELECT ` + historialSelectCols + ` FROM vista_historial_tarimas WHERE 1=1`)
+
+	if filters.NumeroProducto != "" {
+		sb.WriteString(` AND numero_producto LIKE '%' || ? || '%'`)
+		args = append(args, filters.NumeroProducto)
+	}
+	if filters.NumeroTarima != "" {
+		sb.WriteString(` AND numero_tarima LIKE '%' || ? || '%'`)
+		args = append(args, filters.NumeroTarima)
+	}
+	if filters.NumeroUsuario != "" {
+		sb.WriteString(` AND numero_usuario LIKE '%' || ? || '%'`)
+		args = append(args, filters.NumeroUsuario)
+	}
+	if filters.NumeroVenta != "" {
+		sb.WriteString(` AND numero_venta LIKE '%' || ? || '%'`)
+		args = append(args, filters.NumeroVenta)
+	}
+	if filters.FechaRegistro != "" {
+		sb.WriteString(` AND date(fecha_registro, 'localtime') = ?`)
+		args = append(args, filters.FechaRegistro)
+	}
+	if filters.Legajo != "" {
+		sb.WriteString(` AND legajo LIKE '%' || ? || '%'`)
+		args = append(args, filters.Legajo)
+	}
+	if filters.NombreUsuario != "" {
+		sb.WriteString(` AND nombre_usuario LIKE '%' || ? || '%'`)
+		args = append(args, filters.NombreUsuario)
+	}
+	if filters.CantidadCajasMin != nil {
+		sb.WriteString(` AND cantidad_cajas >= ?`)
+		args = append(args, *filters.CantidadCajasMin)
+	}
+	if filters.PesoMin != nil {
+		sb.WriteString(` AND peso >= ?`)
+		args = append(args, *filters.PesoMin)
+	}
+	if filters.FechaEliminacion != "" {
+		sb.WriteString(` AND date(fecha_eliminacion, 'localtime') = ?`)
+		args = append(args, filters.FechaEliminacion)
+	}
+
+	sb.WriteString(` ORDER BY fecha_eliminacion DESC LIMIT ?`)
+	args = append(args, limit)
+
+	return sb.String(), args
+}
