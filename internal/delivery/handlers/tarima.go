@@ -32,6 +32,14 @@ type tarimasPageData struct {
 	ShowAll    bool
 }
 
+type historialPageData struct {
+	Title      string
+	AppName    string
+	Session    *middleware.SessionData
+	Eliminadas []tarima.TarimaEliminada
+	Filters    tarima.FiltrosHistorial
+}
+
 type tarimaFormData struct {
 	Title    string
 	AppName  string
@@ -219,6 +227,39 @@ func (h *TarimaHandler) ActualizarTarima(w http.ResponseWriter, r *http.Request)
 	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 }
 
+func (h *TarimaHandler) ListarHistorial(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+
+	filters := parseHistorialFilters(r)
+
+	data, err := h.loadHistorial(r, filters)
+	if err != nil {
+		http.Error(w, "Error interno al listar historial", http.StatusInternalServerError)
+		return
+	}
+	data.Title = "Tarimas Eliminadas"
+	data.AppName = appName
+	data.Session = session
+
+	h.renderer.Render(w, "historial_tarimas", data, http.StatusOK)
+}
+
+func (h *TarimaHandler) ListarHistorialFragment(w http.ResponseWriter, r *http.Request) {
+	filters := parseHistorialFilters(r)
+
+	data, err := h.loadHistorial(r, filters)
+	if err != nil {
+		http.Error(w, "Error interno al listar historial", http.StatusInternalServerError)
+		return
+	}
+
+	if url := canonicalHistorialURL(filters); url != "" {
+		w.Header().Set("HX-Push-Url", url)
+	}
+
+	h.renderer.RenderPartial(w, "tabla_historial", data, http.StatusOK)
+}
+
 func (h *TarimaHandler) EliminarTarima(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
 	if err != nil {
@@ -329,6 +370,86 @@ func parseFilters(r *http.Request) tarima.FiltrosTarima {
 		}
 	}
 	return f
+}
+
+func (h *TarimaHandler) loadHistorial(r *http.Request, filters tarima.FiltrosHistorial) (*historialPageData, error) {
+	ctx := r.Context()
+
+	eliminadas, err := h.tarima.ListHistorial(ctx, filters, tarima.DefaultLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	return &historialPageData{
+		Eliminadas: eliminadas,
+		Filters:    filters,
+	}, nil
+}
+
+func parseHistorialFilters(r *http.Request) tarima.FiltrosHistorial {
+	q := r.URL.Query()
+	f := tarima.FiltrosHistorial{
+		FiltrosTarima: tarima.FiltrosTarima{
+			NumeroProducto: strings.TrimSpace(q.Get("numero_producto")),
+			NumeroTarima:   strings.TrimSpace(q.Get("numero_tarima")),
+			NumeroUsuario:  strings.TrimSpace(q.Get("numero_usuario")),
+			NumeroVenta:    strings.TrimSpace(q.Get("numero_venta")),
+			FechaRegistro:  strings.TrimSpace(q.Get("fecha_registro")),
+			Legajo:         strings.TrimSpace(q.Get("legajo")),
+			NombreUsuario:  strings.TrimSpace(q.Get("nombre_usuario")),
+		},
+		FechaEliminacion: strings.TrimSpace(q.Get("fecha_eliminacion")),
+	}
+
+	if v := strings.TrimSpace(q.Get("cantidad_cajas_min")); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			f.CantidadCajasMin = &n
+		}
+	}
+	if v := strings.TrimSpace(q.Get("peso_min")); v != "" {
+		if p, err := strconv.ParseFloat(v, 64); err == nil {
+			f.PesoMin = &p
+		}
+	}
+	return f
+}
+
+func canonicalHistorialURL(filters tarima.FiltrosHistorial) string {
+	vals := url.Values{}
+	if filters.NumeroProducto != "" {
+		vals.Set("numero_producto", filters.NumeroProducto)
+	}
+	if filters.NumeroTarima != "" {
+		vals.Set("numero_tarima", filters.NumeroTarima)
+	}
+	if filters.NumeroUsuario != "" {
+		vals.Set("numero_usuario", filters.NumeroUsuario)
+	}
+	if filters.NumeroVenta != "" {
+		vals.Set("numero_venta", filters.NumeroVenta)
+	}
+	if filters.FechaRegistro != "" {
+		vals.Set("fecha_registro", filters.FechaRegistro)
+	}
+	if filters.Legajo != "" {
+		vals.Set("legajo", filters.Legajo)
+	}
+	if filters.NombreUsuario != "" {
+		vals.Set("nombre_usuario", filters.NombreUsuario)
+	}
+	if filters.CantidadCajasMin != nil {
+		vals.Set("cantidad_cajas_min", strconv.Itoa(*filters.CantidadCajasMin))
+	}
+	if filters.PesoMin != nil {
+		vals.Set("peso_min", strconv.FormatFloat(*filters.PesoMin, 'f', -1, 64))
+	}
+	if filters.FechaEliminacion != "" {
+		vals.Set("fecha_eliminacion", filters.FechaEliminacion)
+	}
+	if len(vals) == 0 {
+		return ""
+	}
+	return "/tarimas/historial?" + vals.Encode()
 }
 
 func canonicalTarimasURL(filters tarima.FiltrosTarima, showAll bool) string {
