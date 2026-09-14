@@ -46,7 +46,7 @@
             <tbody>
                 {{if .Tarimas}}
                 {{range .Tarimas}}
-                <tr id="tarima-{{.ID}}">
+                <tr id="tarima-row-{{.ID}}">
                     <td>{{.NumeroProducto}}</td>
                     <td>{{.NumeroTarima}}</td>
                     <td>{{.NumeroUsuario}}</td>
@@ -88,7 +88,7 @@
         {{if .Tarimas}}
         <div class="row g-3 p-3">
             {{range .Tarimas}}
-            <div class="col-12 col-sm-12 col-md-4 col-lg-3">
+            <div class="col-12 col-sm-12 col-md-4 col-lg-3" id="tarima-card-{{.ID}}">
                 <div class="card mb-3">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
