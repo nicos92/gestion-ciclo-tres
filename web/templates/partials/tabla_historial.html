@@ -1,0 +1,101 @@
+{{define "tabla_historial"}}
+<div id="tabla-historial" class="card-body">
+
+    {{if .Filters.HasFilters}}
+    <div class="print-filters" style="display: none;">
+        <h4>Filtros Aplicados:</h4>
+        <ul>
+            {{if .Filters.NumeroProducto}}<li><strong>Producto:</strong> {{.Filters.NumeroProducto}}</li>{{end}}
+            {{if .Filters.NumeroTarima}}<li><strong>Tarima:</strong> {{.Filters.NumeroTarima}}</li>{{end}}
+            {{if .Filters.NumeroUsuario}}<li><strong>Usuario:</strong> {{.Filters.NumeroUsuario}}</li>{{end}}
+            {{if .Filters.NumeroVenta}}<li><strong>Venta:</strong> {{.Filters.NumeroVenta}}</li>{{end}}
+            {{if .Filters.FechaRegistro}}<li><strong>Fecha de Registro:</strong> {{.Filters.FechaRegistro}}</li>{{end}}
+            {{if .Filters.Legajo}}<li><strong>Legajo:</strong> {{.Filters.Legajo}}</li>{{end}}
+            {{if .Filters.NombreUsuario}}<li><strong>Nombre Usuario:</strong> {{.Filters.NombreUsuario}}</li>{{end}}
+            {{if .Filters.CantidadCajasMin}}<li><strong>Cant. Cajas (min):</strong> {{.Filters.CantidadCajasMin}}</li>{{end}}
+            {{if .Filters.PesoMin}}<li><strong>Peso (min):</strong> {{.Filters.PesoMin}}</li>{{end}}
+            {{if .Filters.FechaEliminacion}}<li><strong>Fecha de Eliminación:</strong> {{.Filters.FechaEliminacion}}</li>{{end}}
+        </ul>
+    </div>
+    {{end}}
+
+    <!-- Table view for large and extra large screens -->
+    <div class="table-responsive d-none d-xl-block">
+        <table class="table table-sm table-striped table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Tarima</th>
+                    <th>Usuario</th>
+                    <th>Cajas</th>
+                    <th>Peso</th>
+                    <th>Venta</th>
+                    <th>Legajo</th>
+                    <th>Nombre</th>
+                    <th>Fecha Registro</th>
+                    <th>Fecha Eliminación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{if .Eliminadas}}
+                {{range .Eliminadas}}
+                <tr>
+                    <td>{{.NumeroProducto}}</td>
+                    <td>{{.NumeroTarima}}</td>
+                    <td>{{.NumeroUsuario}}</td>
+                    <td>{{.CantidadCajas}}</td>
+                    <td>{{formatMoney .Peso}}</td>
+                    <td>{{.NumeroVenta}}</td>
+                    <td>{{if .Legajo}}{{.Legajo}}{{else}}N/A{{end}}</td>
+                    <td>{{if .NombreUsuario}}{{.NombreUsuario}}{{else}}N/A{{end}}</td>
+                    <td>{{formatDate .FechaRegistro}}</td>
+                    <td>{{formatDate .FechaEliminacion}}</td>
+                </tr>
+                {{end}}
+                {{else}}
+                <tr>
+                    <td colspan="10" class="text-center text-muted">No hay tarimas eliminadas registradas.</td>
+                </tr>
+                {{end}}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Card view for smaller screens -->
+    <div class="d-xl-none">
+        {{if .Eliminadas}}
+        <div class="row g-3 p-3">
+            {{range .Eliminadas}}
+            <div class="col-12 col-sm-12 col-md-4 col-lg-3">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">
+                                <span class="badge bg-danger">Tarima: {{.NumeroTarima}}</span>
+                            </h5>
+                        </div>
+                        <div class="card-text">
+                            <p class="mb-1"><strong>Producto:</strong> {{.NumeroProducto}}</p>
+                            <p class="mb-1"><strong>Usuario:</strong> {{.NumeroUsuario}}</p>
+                            <p class="mb-1"><strong>Cajas:</strong> {{.CantidadCajas}}</p>
+                            <p class="mb-1"><strong>Peso:</strong> {{formatMoney .Peso}}</p>
+                            <p class="mb-1"><strong>Venta:</strong> {{.NumeroVenta}}</p>
+                            <p class="mb-1"><strong>Legajo:</strong> {{if .Legajo}}{{.Legajo}}{{else}}N/A{{end}}</p>
+                            <p class="mb-1"><strong>Nombre:</strong> {{if .NombreUsuario}}{{.NombreUsuario}}{{else}}N/A{{end}}</p>
+                            <p class="mb-1"><strong>Fecha Registro:</strong> {{formatDate .FechaRegistro}}</p>
+                            <p class="mb-1"><strong>Eliminada:</strong> <span class="text-danger">{{formatDate .FechaEliminacion}}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="p-3">
+            <p class="text-center text-muted">No hay tarimas eliminadas registradas.</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+<strong id="count-mostradas" hx-swap-oob="true">{{len .Eliminadas}}</strong>
+{{end}}
