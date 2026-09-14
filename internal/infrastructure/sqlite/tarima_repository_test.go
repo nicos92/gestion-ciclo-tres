@@ -588,3 +588,150 @@ func TestDelete_NotFound(t *testing.T) {
 		t.Errorf("historial should be empty, got %d", historialCount)
 	}
 }
+
+func TestListHistorial_ReturnsEliminada(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	adminID := int64(1)
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+		Descripcion:    "Tarima de prueba",
+		IDUsuario:      &adminID,
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+
+	if _, err := repo.Delete(ctx, id); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	eliminadas, err := repo.ListHistorial(ctx, tarima.FiltrosHistorial{}, 1000)
+	if err != nil {
+		t.Fatalf("ListHistorial: %v", err)
+	}
+	if len(eliminadas) != 1 {
+		t.Fatalf("ListHistorial = %d registros, se esperaba 1", len(eliminadas))
+	}
+
+	h := eliminadas[0]
+	if h.IDTarimaEliminada != id {
+		t.Errorf("id_tarima_eliminada = %d, want %d", h.IDTarimaEliminada, id)
+	}
+	if h.NumeroProducto != "880197" {
+		t.Errorf("numero_producto = %q, want 880197", h.NumeroProducto)
+	}
+	if h.NumeroTarima != "000999" {
+		t.Errorf("numero_tarima = %q, want 000999", h.NumeroTarima)
+	}
+	if h.CantidadCajas != 45 {
+		t.Errorf("cantidad_cajas = %d, want 45", h.CantidadCajas)
+	}
+	if h.Peso != 450.00 {
+		t.Errorf("peso = %f, want 450.00", h.Peso)
+	}
+	if h.NumeroVenta != "25-123456" {
+		t.Errorf("numero_venta = %q, want 25-123456", h.NumeroVenta)
+	}
+	if h.Descripcion != "Tarima de prueba" {
+		t.Errorf("descripcion = %q, want 'Tarima de prueba'", h.Descripcion)
+	}
+	if h.IDUsuario == nil || *h.IDUsuario != adminID {
+		t.Errorf("id_usuario = %v, want %d", h.IDUsuario, adminID)
+	}
+	if h.FechaEliminacion.IsZero() {
+		t.Error("fecha_eliminacion no debería ser cero")
+	}
+}
+
+func TestListHistorial_FiltraPorProducto(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created1 := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	created2 := &tarima.Tarima{
+		CodigoBarras:   "088019900099981020004545000000",
+		NumeroProducto: "880199",
+		NumeroTarima:   "000998",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  30,
+		Peso:           300.00,
+		NumeroVenta:    "25-123457",
+	}
+
+	id1, err := repo.Create(ctx, created1)
+	if err != nil {
+		t.Fatalf("Create 1: %v", err)
+	}
+	id2, err := repo.Create(ctx, created2)
+	if err != nil {
+		t.Fatalf("Create 2: %v", err)
+	}
+	if _, err := repo.Delete(ctx, id1); err != nil {
+		t.Fatalf("Delete 1: %v", err)
+	}
+	if _, err := repo.Delete(ctx, id2); err != nil {
+		t.Fatalf("Delete 2: %v", err)
+	}
+
+	eliminadas, err := repo.ListHistorial(ctx, tarima.FiltrosHistorial{
+		FiltrosTarima: tarima.FiltrosTarima{NumeroProducto: "880197"},
+	}, 1000)
+	if err != nil {
+		t.Fatalf("ListHistorial filtrado: %v", err)
+	}
+	if len(eliminadas) != 1 {
+		t.Fatalf("ListHistorial filtrado = %d registros, se esperaba 1", len(eliminadas))
+	}
+	if eliminadas[0].IDTarimaEliminada != id1 {
+		t.Errorf("filtrado devolvió la tarima %d, want %d", eliminadas[0].IDTarimaEliminada, id1)
+	}
+}
+
+func TestListHistorial_FiltraPorFechaEliminacion(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created := &tarima.Tarima{
+		CodigoBarras:   "088019700099981010004545000000",
+		NumeroProducto: "880197",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if _, err := repo.Delete(ctx, id); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	hoy := time.Now().Local().Format("2006-01-02")
+	eliminadas, err := repo.ListHistorial(ctx, tarima.FiltrosHistorial{FechaEliminacion: hoy}, 1000)
+	if err != nil {
+		t.Fatalf("ListHistorial por fecha eliminación: %v", err)
+	}
+	if len(eliminadas) != 1 {
+		t.Fatalf("ListHistorial por fecha = %d registros, se esperaba 1", len(eliminadas))
+	}
+}
