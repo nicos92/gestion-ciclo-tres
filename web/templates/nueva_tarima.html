@@ -30,7 +30,7 @@
                 <div class="card-header d-flex flex-column align-items-start no-print">
                     <h3 class="mb-4">Formulario de Nueva Tarima</h3>
                     <p class="text-muted mb-4">
-                        Complete los campos siguientes para registrar una nueva tarima en el sistema
+                        Complete los campos para registrar una nueva tarima
                     </p>
                 </div>
                 <div class="card-body">{{template "form_tarimas" .}}</div>
@@ -38,14 +38,4 @@
         </div>
     </div>
 </div>
-{{end}} {{define "scripts"}}
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var cb = document.getElementById("codigoBarras");
-        if (cb) cb.focus();
-        setTimeout(function () {
-            if (cb) cb.focus();
-        }, 100);
-    });
-</script>
 {{end}}
