@@ -95,6 +95,8 @@
                             <h5 class="card-title">
                                 <span class="badge bg-primary">Tarima: {{.NumeroTarima}}</span>
                             </h5>
+                        </div>
+                        <div class="d-flex justify-content-start align-items-start">
                             {{if and $.Session (ge $.Session.Nivel 2)}}
                             <a href="/tarimas/editar/{{.ID}}" class="btn btn-outline-warning btn-sm me-1"
                                title="Editar tarima">
