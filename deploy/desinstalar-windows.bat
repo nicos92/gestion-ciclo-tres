@@ -1,19 +1,29 @@
 @echo off
 REM ============================================================
-REM  Desinstala el servicio Windows gestion-ciclo-tres (NSSM)
+REM  Desinstala el servicio nativo de Windows gestion-ciclo-tres
+REM  Requiere ejecutarse como Administrador.
 REM  Uso:  desinstalar-windows.bat
 REM ============================================================
 setlocal
 set "SVCCNAME=gestion-ciclo-tres"
-if "%NSSM_EXE%"=="" (set "NSSM_EXE=nssm")
 
-where "%NSSM_EXE%" >nul 2>nul || (
-  echo [ERROR] NSSM no encontrado en el PATH. Setea NSSM_EXE.>&2
+net session >nul 2>nul || (
+  echo [ERROR] Debes ejecutar este script como Administrador.>&2
   exit /b 1
 )
 
-"%NSSM_EXE%" stop "%SVCCNAME%" >nul 2>nul
-"%NSSM_EXE%" remove "%SVCCNAME%" confirm
+sc query "%SVCCNAME%" >nul 2>nul
+if errorlevel 1 (
+  echo El servicio %SVCCNAME% no existe.
+  exit /b 0
+)
+
+echo ==^> Deteniendo servicio...
+sc stop "%SVCCNAME%" >nul 2>nul
+timeout /t 2 /nobreak >nul
+
+echo ==^> Eliminando servicio...
+sc delete "%SVCCNAME%"
 if errorlevel 1 (
   echo [ERROR] No se pudo quitar el servicio.>&2
   exit /b 1
