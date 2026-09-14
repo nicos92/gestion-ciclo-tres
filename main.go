@@ -215,6 +215,14 @@ func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.Au
 			middleware.NivelRequerido(store, 3)(
 				http.HandlerFunc(tarimaHandler.EliminarTarima))))
 
+	// Tarimas — historial de eliminadas (cualquier usuario autenticado)
+	mux.Handle("GET /tarimas/historial",
+		middleware.AuthRequired(store)(
+			http.HandlerFunc(tarimaHandler.ListarHistorial)))
+	mux.Handle("GET /tarimas/historial/lista",
+		middleware.AuthRequired(store)(
+			http.HandlerFunc(tarimaHandler.ListarHistorialFragment)))
+
 	// Dashboard (protegido: nivel 1)
 	mux.Handle("GET /dashboard",
 		middleware.AuthRequired(store)(
