@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -239,17 +240,19 @@ func (h *TarimaHandler) EliminarTarima(w http.ResponseWriter, r *http.Request) {
 }
 
 func tarimaErrorKey(err error) string {
-	switch err {
-	case tarima.ErrCodigoBarrasDuplicado:
+	switch {
+	case errors.Is(err, tarima.ErrCodigoBarrasDuplicado):
 		return "duplicate"
-	case tarima.ErrBarcodeLongitud:
+	case errors.Is(err, tarima.ErrBarcodeLongitud):
 		return "barcode_length"
-	case tarima.ErrBarcodePrefix:
+	case errors.Is(err, tarima.ErrBarcodePrefix):
 		return "barcode_prefix"
-	case tarima.ErrBarcodeMarker:
+	case errors.Is(err, tarima.ErrBarcodeMarker):
 		return "barcode_marker"
-	case tarima.ErrBarcodeNoCoincide:
+	case errors.Is(err, tarima.ErrBarcodeNoCoincide):
 		return "barcode_mismatch"
+	case errors.Is(err, tarima.ErrTarimaNoEncontrada):
+		return "not_found"
 	default:
 		return "validation"
 	}

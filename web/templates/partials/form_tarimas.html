@@ -9,7 +9,7 @@
 
     {{if .Error}}
     <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i>{{if eq .Error "duplicate"}}Ya existe una tarima registrada con este código de barras en la misma fecha.{{else if eq .Error "barcode_length"}}El código de barras debe tener exactamente 30 dígitos.{{else if eq .Error "barcode_prefix"}}El código de barras debe iniciar con 0.{{else if eq .Error "barcode_marker"}}El código de barras debe contener 9998 en las posiciones 13-17.{{else if eq .Error "barcode_mismatch"}}El código de barras no coincide con los campos del formulario.{{else if eq .Error "validation"}}Por favor revise los campos del formulario.{{else if eq .Error "not_found"}}La tarima no fue encontrada.{{else}}Ocurrió un error inesperado.{{end}}
+        <i class="fas fa-exclamation-triangle me-2"></i>{{if eq .Error "duplicate"}}Ya existe una tarima registrada con este código de barras en la misma fecha.{{else if eq .Error "barcode_length"}}El código de barras debe tener exactamente 30 dígitos.{{else if eq .Error "barcode_prefix"}}El código de barras debe iniciar con 0.{{else if eq .Error "barcode_marker"}}El código de barras debe contener 9998 en las posiciones 13-17.{{else if eq .Error "barcode_mismatch"}}El código de barras no coincide con los campos del formulario.{{else if eq .Error "validation"}}Por favor revise los campos del formulario.{{else if eq .Error "not_found"}}La tarima no fue encontrada. verifique eliminadas.{{else}}Ocurrió un error inesperado.{{end}}
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {{end}}

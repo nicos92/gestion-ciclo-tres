@@ -21,7 +21,7 @@ var (
 	ErrNumeroVentaMax        = errors.New("el número de venta no puede tener más de 9 caracteres")
 	ErrCodigoBarrasDuplicado = errors.New("ya existe una tarima registrada con este código de barras")
 	ErrBarcodeNoCoincide     = errors.New("el código de barras no coincide con los campos del formulario")
-	ErrTarimaNoEncontrada    = errors.New("tarima no encontrada")
+	ErrTarimaNoEncontrada    = errors.New("tarima no encontrada. verifique eliminadas.")
 )
 
 var ventaRegex = regexp.MustCompile(`^\d{2}-\d{6}$`)
@@ -45,13 +45,13 @@ type Tarima struct {
 }
 
 type FiltrosTarima struct {
-	NumeroProducto  string
-	NumeroTarima    string
-	NumeroUsuario   string
-	NumeroVenta     string
-	FechaRegistro   string
-	Legajo          string
-	NombreUsuario   string
+	NumeroProducto   string
+	NumeroTarima     string
+	NumeroUsuario    string
+	NumeroVenta      string
+	FechaRegistro    string
+	Legajo           string
+	NombreUsuario    string
 	CantidadCajasMin *int
 	PesoMin          *float64
 }
