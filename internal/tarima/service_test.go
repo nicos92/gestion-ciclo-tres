@@ -95,6 +95,11 @@ func (m *mockRepo) CountAll(_ context.Context) (int, error) {
 	return 10, nil
 }
 
+func (m *mockRepo) ListHistorial(_ context.Context, _ FiltrosHistorial, limit int) ([]TarimaEliminada, error) {
+	m.limit = limit
+	return []TarimaEliminada{{ID: 1, IDTarimaEliminada: 9}}, nil
+}
+
 func TestList_DefaultToday(t *testing.T) {
 	repo := &mockRepo{}
 	svc := NewTarimaService(repo)
@@ -201,6 +206,42 @@ func TestCountToday(t *testing.T) {
 	}
 }
 
+func TestListHistorial(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	result, err := svc.ListHistorial(context.Background(), FiltrosHistorial{}, 0)
+	if err != nil {
+		t.Fatalf("ListHistorial: %v", err)
+	}
+	if len(result) != 1 {
+		t.Errorf("got %d results, want 1", len(result))
+	}
+	if result[0].IDTarimaEliminada != 9 {
+		t.Errorf("IDTarimaEliminada = %d, want 9", result[0].IDTarimaEliminada)
+	}
+	if repo.limit != DefaultLimit {
+		t.Errorf("limit = %d, want %d", repo.limit, DefaultLimit)
+	}
+}
+
+func TestListHistorial_CapsLimit(t *testing.T) {
+	repo := &mockRepo{}
+	svc := NewTarimaService(repo)
+
+	svc.ListHistorial(context.Background(), FiltrosHistorial{}, 99999)
+	if repo.limit != MaxLimit {
+		t.Errorf("limit = %d, want MaxLimit %d", repo.limit, MaxLimit)
+	}
+
+	smallRepo := &mockRepo{}
+	smallSvc := NewTarimaService(smallRepo)
+	smallSvc.ListHistorial(context.Background(), FiltrosHistorial{}, -1)
+	if smallRepo.limit != DefaultLimit {
+		t.Errorf("limit = %d, want DefaultLimit %d", smallRepo.limit, DefaultLimit)
+	}
+}
+
 func TestHasFilters(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -217,6 +258,29 @@ func TestHasFilters(t *testing.T) {
 		{"nombre", FiltrosTarima{NombreUsuario: "Juan"}, true},
 		{"cajas_min", func() FiltrosTarima { v := 10; return FiltrosTarima{CantidadCajasMin: &v} }(), true},
 		{"peso_min", func() FiltrosTarima { v := 100.5; return FiltrosTarima{PesoMin: &v} }(), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.filters.HasFilters(); got != tt.want {
+				t.Errorf("HasFilters() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestHasFiltersHistorial(t *testing.T) {
+	tests := []struct {
+		name    string
+		filters FiltrosHistorial
+		want    bool
+	}{
+		{"empty", FiltrosHistorial{}, false},
+		{"fecha_eliminacion", FiltrosHistorial{FechaEliminacion: "2026-01-01"}, true},
+		{"heredado_producto", FiltrosHistorial{FiltrosTarima: FiltrosTarima{NumeroProducto: "123"}}, true},
+		{"heredado_cajas", func() FiltrosHistorial {
+			v := 10
+			return FiltrosHistorial{FiltrosTarima: FiltrosTarima{CantidadCajasMin: &v}}
+		}(), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
