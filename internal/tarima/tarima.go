@@ -44,6 +44,26 @@ type Tarima struct {
 	NombreUsuario  string
 }
 
+type TarimaEliminada struct {
+	ID                int64
+	IDTarimaEliminada int64
+	CodigoBarras      string
+	NumeroProducto    string
+	NumeroTarima      string
+	NumeroUsuario     string
+	Conservacion      string
+	CantidadCajas     int
+	Peso              float64
+	NumeroVenta       string
+	Descripcion       string
+	IDUsuario         *int64
+	FechaRegistro     time.Time
+	Fecha             time.Time
+	FechaEliminacion  time.Time
+	Legajo            string
+	NombreUsuario     string
+}
+
 type FiltrosTarima struct {
 	NumeroProducto   string
 	NumeroTarima     string
@@ -56,6 +76,11 @@ type FiltrosTarima struct {
 	PesoMin          *float64
 }
 
+type FiltrosHistorial struct {
+	FiltrosTarima
+	FechaEliminacion string
+}
+
 func (f FiltrosTarima) HasFilters() bool {
 	if f.NumeroProducto != "" || f.NumeroTarima != "" || f.NumeroUsuario != "" ||
 		f.NumeroVenta != "" || f.FechaRegistro != "" || f.Legajo != "" ||
@@ -66,6 +91,13 @@ func (f FiltrosTarima) HasFilters() bool {
 		return true
 	}
 	return false
+}
+
+func (f FiltrosHistorial) HasFilters() bool {
+	if f.FiltrosTarima.HasFilters() {
+		return true
+	}
+	return f.FechaEliminacion != ""
 }
 
 func ValidateTarima(t *Tarima) error {
