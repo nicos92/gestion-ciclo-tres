@@ -21,7 +21,7 @@
             <input type="number" class="form-control" id="codigoBarras" name="codigoBarras"
                    placeholder="Código de Barras" required step="1" maxlength="30"
                    value="{{if .Tarima}}{{.Tarima.CodigoBarras}}{{end}}"
-                   oninput="autoFillFromBarcode(this)">
+                   oninput="autoFillFromBarcode(this)" autofocus>
             <div id="invalidFormat0" class="invalid-feedback" style="display:none;">El código debe comenzar con 0.</div>
             <div id="invalidFormat9998" class="invalid-feedback" style="display:none;">El código debe contener 9998 en las posiciones 13-17.</div>
 
