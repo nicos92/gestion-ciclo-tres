@@ -1,8 +1,10 @@
 # Despliegue como servicio
 
 > `gestion-ciclo-tres` es un HTTP server en Go (puro, sin dependencias del sistema)
-> que ya implementa *graceful shutdown* ante `SIGTERM`/`SIGINT`, ideal para correr
-> como servicio nativo en **Linux (systemd)** y **Windows (NSSM)**.
+> que implementa *graceful shutdown* ante `SIGTERM`/`SIGINT` y, en Windows, se
+> integra directamente con el Administrador de servicios (SCM) sin necesidad de
+> NSSM. Se despliega como servicio nativo en **Linux (systemd)** y
+> **Windows (servicio nativo)**.
 
 Configuración (todo vía variables de entorno, ver `internal/config`):
 
@@ -12,6 +14,7 @@ Configuración (todo vía variables de entorno, ver `internal/config`):
 | `DB_PATH` | `~/.config/nicolas-sandoval/gestion-ciclo-tres/gestion-ciclo-tres.db` | Ruta del SQLite |
 | `TZ` | `America/Argentina/Buenos_Aires` | Zona horaria (afecta filtro "hoy") |
 | `APP_NAME` | `Gestión Ciclo Tres` | Nombre mostrado en la UI |
+| `LOG_FILE` | *(vacío: solo stdout)* | Ruta de archivo de log; si se define, se escribe a stdout **y** al archivo (útil al correr como servicio) |
 
 Healthcheck: `GET /healthz`.
 
