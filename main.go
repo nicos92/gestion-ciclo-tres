@@ -32,6 +32,13 @@ var templatesFS embed.FS
 //go:embed web/static
 var staticFS embed.FS
 
+const (
+	NivelProduccion     = 1
+	NivelSupervisor     = 2
+	NivelJefeProduccion = 3
+	NivelAdmin          = 4
+)
+
 func main() {
 	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
 
@@ -163,102 +170,196 @@ func run(stop <-chan struct{}, cfg config.Config) error {
 	}
 }
 
-func routes(db *sql.DB, store *middleware.SessionStore, authHandler *handlers.AuthHandler, tarimaHandler *handlers.TarimaHandler, usuarioHandler *handlers.UsuarioHandler) http.Handler {
+func routes(
+	db *sql.DB,
+	store *middleware.SessionStore,
+	authHandler *handlers.AuthHandler,
+	tarimaHandler *handlers.TarimaHandler,
+	usuarioHandler *handlers.UsuarioHandler,
+) http.Handler {
+
 	mux := http.NewServeMux()
 
-	// Auth (públicos)
+	requireAuth := func(h http.Handler) http.Handler {
+		return middleware.AuthRequired(store)(h)
+	}
+
+	requireNivel := func(nivel int, h http.Handler) http.Handler {
+		return middleware.AuthRequired(store)(
+			middleware.NivelRequerido(store, nivel)(h),
+		)
+	}
+
+	// ============================================================
+	// AUTH
+	// ============================================================
+
 	mux.HandleFunc("GET /login", authHandler.ShowLogin)
 	mux.HandleFunc("POST /login", authHandler.Login)
 	mux.HandleFunc("POST /logout", authHandler.Logout)
 
-	// Auth (protegidos: nivel 4)
 	mux.Handle("GET /register",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 4)(
-				http.HandlerFunc(authHandler.ShowRegister))))
+		requireNivel(
+			NivelAdmin,
+			http.HandlerFunc(authHandler.ShowRegister),
+		),
+	)
+
 	mux.Handle("POST /register",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 4)(
-				http.HandlerFunc(authHandler.Register))))
+		requireNivel(
+			NivelAdmin,
+			http.HandlerFunc(authHandler.Register),
+		),
+	)
 
-	// Tarimas (protegidos: nivel 1)
-	mux.Handle("GET /tarimas",
-		middleware.AuthRequired(store)(
-			http.HandlerFunc(tarimaHandler.ListarTarimas)))
-	mux.Handle("GET /tarimas/lista",
-		middleware.AuthRequired(store)(
-			http.HandlerFunc(tarimaHandler.ListarTarimasFragment)))
+	// ============================================================
+	// DASHBOARD
+	// ============================================================
 
-	// Tarimas — alta (nivel 1)
-	mux.Handle("GET /tarimas/nueva",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 1)(
-				http.HandlerFunc(tarimaHandler.ShowNuevaTarima))))
-	mux.Handle("POST /tarimas",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 1)(
-				http.HandlerFunc(tarimaHandler.GuardarTarima))))
-
-	// Tarimas — edición (nivel 2)
-	mux.Handle("GET /tarimas/editar/{id}",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 2)(
-				http.HandlerFunc(tarimaHandler.ShowEditarTarima))))
-	mux.Handle("POST /tarimas/actualizar/{id}",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 2)(
-				http.HandlerFunc(tarimaHandler.ActualizarTarima))))
-
-	// Tarimas — eliminación (nivel 2: supervisor)
-	mux.Handle("DELETE /tarimas/{id}",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 3)(
-				http.HandlerFunc(tarimaHandler.EliminarTarima))))
-
-	// Tarimas — historial de eliminadas (cualquier usuario autenticado)
-	mux.Handle("GET /tarimas/historial",
-		middleware.AuthRequired(store)(
-			http.HandlerFunc(tarimaHandler.ListarHistorial)))
-	mux.Handle("GET /tarimas/historial/lista",
-		middleware.AuthRequired(store)(
-			http.HandlerFunc(tarimaHandler.ListarHistorialFragment)))
-
-	// Dashboard (protegido: nivel 1)
 	mux.Handle("GET /dashboard",
-		middleware.AuthRequired(store)(
-			http.HandlerFunc(usuarioHandler.ShowDashboard)))
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(usuarioHandler.ShowDashboard),
+		),
+	)
 
-	// Usuarios — listar (nivel 4)
-	mux.Handle("GET /usuarios",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 4)(
-				http.HandlerFunc(usuarioHandler.ListarUsuarios))))
-
-	// Usuarios — editar form (nivel 4)
-	mux.Handle("GET /usuarios/editar/{id}",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 4)(
-				http.HandlerFunc(usuarioHandler.ShowEditarUsuario))))
-
-	// Usuarios — actualizar (nivel 4)
-	mux.Handle("POST /usuarios/actualizar/{id}",
-		middleware.AuthRequired(store)(
-			middleware.NivelRequerido(store, 4)(
-				http.HandlerFunc(usuarioHandler.ActualizarUsuario))))
-
-	// Home — redirect a dashboard
 	mux.Handle("GET /",
-		middleware.AuthRequired(store)(
+		requireAuth(
 			http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				http.Redirect(w, r, "/dashboard", http.StatusFound)
-			})))
+			}),
+		),
+	)
 
-	// Healthz (público)
-	mux.Handle("GET /healthz", handlers.NewHealthz(db))
+	// ============================================================
+	// TARIMAS - CONSULTA
+	// ============================================================
 
-	// Static files
-	staticSub, _ := fs.Sub(staticFS, "web/static")
-	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
+	mux.Handle("GET /tarimas",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(tarimaHandler.ListarTarimas),
+		),
+	)
+
+	mux.Handle("GET /tarimas/lista",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(tarimaHandler.ListarTarimasFragment),
+		),
+	)
+
+	mux.Handle("GET /tarimas/historial",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(tarimaHandler.ListarHistorial),
+		),
+	)
+
+	mux.Handle("GET /tarimas/historial/lista",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(tarimaHandler.ListarHistorialFragment),
+		),
+	)
+
+	// ============================================================
+	// TARIMAS - CREACIÓN
+	// ============================================================
+
+	mux.Handle("GET /tarimas/nueva",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(tarimaHandler.ShowNuevaTarima),
+		),
+	)
+
+	mux.Handle("POST /tarimas",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(tarimaHandler.GuardarTarima),
+		),
+	)
+
+	// ============================================================
+	// TARIMAS - EDICIÓN
+	// ============================================================
+
+	mux.Handle("GET /tarimas/editar/{id}",
+		requireNivel(
+			NivelSupervisor,
+			http.HandlerFunc(tarimaHandler.ShowEditarTarima),
+		),
+	)
+
+	mux.Handle("POST /tarimas/actualizar/{id}",
+		requireNivel(
+			NivelSupervisor,
+			http.HandlerFunc(tarimaHandler.ActualizarTarima),
+		),
+	)
+
+	// ============================================================
+	// TARIMAS - ELIMINACIÓN
+	// ============================================================
+
+	mux.Handle("DELETE /tarimas/{id}",
+		requireNivel(
+			NivelSupervisor,
+			http.HandlerFunc(tarimaHandler.EliminarTarima),
+		),
+	)
+
+	// ============================================================
+	// USUARIOS
+	// ============================================================
+
+	mux.Handle("GET /usuarios",
+		requireNivel(
+			NivelAdmin,
+			http.HandlerFunc(usuarioHandler.ListarUsuarios),
+		),
+	)
+
+	mux.Handle("GET /usuarios/editar/{id}",
+		requireNivel(
+			NivelAdmin,
+			http.HandlerFunc(usuarioHandler.ShowEditarUsuario),
+		),
+	)
+
+	mux.Handle("POST /usuarios/actualizar/{id}",
+		requireNivel(
+			NivelAdmin,
+			http.HandlerFunc(usuarioHandler.ActualizarUsuario),
+		),
+	)
+
+	// ============================================================
+	// HEALTH CHECK
+	// ============================================================
+
+	mux.Handle(
+		"GET /healthz",
+		handlers.NewHealthz(db),
+	)
+
+	// ============================================================
+	// STATIC
+	// ============================================================
+
+	staticSub, err := fs.Sub(staticFS, "web/static")
+	if err != nil {
+		panic(err)
+	}
+
+	mux.Handle(
+		"GET /static/",
+		http.StripPrefix(
+			"/static/",
+			http.FileServer(http.FS(staticSub)),
+		),
+	)
 
 	return mux
 }
