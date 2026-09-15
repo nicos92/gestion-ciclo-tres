@@ -25,6 +25,7 @@ const (
 const dsnQuery = "?_pragma=foreign_keys(1)" +
 	"&_pragma=busy_timeout(5000)" +
 	"&_pragma=journal_mode(WAL)" +
+	"&_pragma=synchronous(FULL)" +
 	"&_txlock=immediate"
 
 // Open abre (o crea si no existe) la base SQLite en path, aplicando el DSN
