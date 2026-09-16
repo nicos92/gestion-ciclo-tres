@@ -17,6 +17,8 @@ set "INSTALL_DIR=C:\gestion-ciclo-tres"
 set "DATA_DIR=%INSTALL_DIR%\data"
 set "LOG_DIR=%INSTALL_DIR%\logs"
 set "BACKUP_DIR=%INSTALL_DIR%\backups"
+REM Carpeta especial donde ademas se copia el RAR. Dejar vacio "" para no copiar.
+set "BACKUP_COPY_DIR=C:\NICOS"
 set "LOG_FILE=%LOG_DIR%\backup.log"
 set "HEALTH_URL=http://localhost:8088/healthz"
 
@@ -70,6 +72,7 @@ REM ---- 4) Crear backup RAR ------------------------------------
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
 for /f %%i in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set "TS=%%i"
 set "BACKUP_FILE=%BACKUP_DIR%\data_%TS%.rar"
+for %%f in ("%BACKUP_FILE%") do set "BK_NAME=%%~nxf"
 
 echo ==^> Creando backup: %BACKUP_FILE%
 "%RAR_EXE%" a -y -ep1 -r -idq "%BACKUP_FILE%" "%DATA_DIR%"
@@ -83,6 +86,28 @@ if errorlevel 1 (
 )
 for %%f in ("%BACKUP_FILE%") do set "BK_SIZE=%%~zf"
 echo ==^> Backup OK: !BACKUP_FILE! (!BK_SIZE! bytes)
+
+REM ---- 4b) Copia del backup a la carpeta especial ---------------
+if defined BACKUP_COPY_DIR goto do_copy_backup
+goto copia_terminada
+
+:do_copy_backup
+echo ==^> Copiando backup a %BACKUP_COPY_DIR%...
+if not exist "%BACKUP_COPY_DIR%" mkdir "%BACKUP_COPY_DIR%"
+if errorlevel 1 goto err_copia
+copy /y "%BACKUP_FILE%" "%BACKUP_COPY_DIR%\%BK_NAME%" >nul
+if errorlevel 1 goto err_copia
+for %%f in ("%BACKUP_COPY_DIR%\%BK_NAME%") do set "COPY_SIZE=%%~zf"
+echo ==^> Backup copiado a: %BACKUP_COPY_DIR%\%BK_NAME% (!COPY_SIZE! bytes)
+echo [%DATE% %TIME%] Backup copiado a %BACKUP_COPY_DIR%\%BK_NAME% (!COPY_SIZE! bytes) >> "%LOG_FILE%"
+goto copia_terminada
+
+:err_copia
+echo [ERROR] No se pudo copiar el backup a %BACKUP_COPY_DIR%.>&2
+echo [%DATE% %TIME%] [ERROR] No se pudo copiar el backup a %BACKUP_COPY_DIR% >> "%LOG_FILE%"
+exit /b 1
+
+:copia_terminada
 
 REM ---- 5) Iniciar el servicio ---------------------------------
 echo ==^> Arrancando servicio %SVCCNAME%...
