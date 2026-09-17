@@ -71,14 +71,18 @@ func (h *TarimaHandler) ListarTarimas(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *TarimaHandler) ListarTarimasFragment(w http.ResponseWriter, r *http.Request) {
+	session := middleware.SessionFromContext(r)
+
 	filters := parseFilters(r)
 	showAll := r.URL.Query().Get("all") == "1"
 
 	data, err := h.loadTarimas(r, filters, showAll)
+
 	if err != nil {
 		http.Error(w, "Error interno al listar tarimas", http.StatusInternalServerError)
 		return
 	}
+	data.Session = session
 
 	if url := canonicalTarimasURL(filters, showAll); url != "" {
 		w.Header().Set("HX-Push-Url", url)
