@@ -33,10 +33,10 @@ var templatesFS embed.FS
 var staticFS embed.FS
 
 const (
-	NivelProduccion     = 1
-	NivelSupervisor     = 2
-	NivelJefeProduccion = 3
-	NivelAdmin          = 4
+	NivelProduccion     int = 1
+	NivelSupervisor     int = 2
+	NivelJefeProduccion int = 3
+	NivelAdmin          int = 4
 )
 
 func main() {
