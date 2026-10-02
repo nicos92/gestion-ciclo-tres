@@ -40,7 +40,7 @@
                 {{if .Eliminadas}}
                 {{range .Eliminadas}}
                 <tr>
-                    <td>{{.NumeroProducto}}</td>
+                    <td>{{if .NombreProducto}}{{.NombreProducto}} ({{.NumeroProducto}}){{else}}{{.NumeroProducto}}{{end}}</td>
                     <td>{{.NumeroTarima}}</td>
                     <td>{{.NumeroUsuario}}</td>
                     <td>{{.CantidadCajas}}</td>
@@ -75,7 +75,7 @@
                             </h5>
                         </div>
                         <div class="card-text">
-                            <p class="mb-1"><strong>Producto:</strong> {{.NumeroProducto}}</p>
+                            <p class="mb-1"><strong>Producto:</strong> {{if .NombreProducto}}{{.NombreProducto}} ({{.NumeroProducto}}){{else}}{{.NumeroProducto}}{{end}}</p>
                             <p class="mb-1"><strong>Usuario:</strong> {{.NumeroUsuario}}</p>
                             <p class="mb-1"><strong>Cajas:</strong> {{.CantidadCajas}}</p>
                             <p class="mb-1"><strong>Peso:</strong> {{formatMoney .Peso}}</p>
