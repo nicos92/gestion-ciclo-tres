@@ -27,16 +27,21 @@
 
         </div>
         <div class="row">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <div class="input-group has-validation mb-3">
                     <span class="input-group-text"><i class="fas fa-tag"></i></span>
                     <input type="number" class="form-control" id="numeroProducto" name="numeroProducto"
                            placeholder="Producto" required step="1" maxlength="6"
-                           value="{{if .Tarima}}{{.Tarima.NumeroProducto}}{{end}}">
+                           value="{{if .Tarima}}{{.Tarima.NumeroProducto}}{{end}}"
+                           hx-get="/productos/buscar" hx-trigger="change"
+                           hx-target="#campo-nombre-producto" hx-swap="outerHTML">
                     <div class="invalid-feedback">Máximo 6 dígitos.</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-5">
+                {{template "campo_nombre_producto" .CampoProducto}}
+            </div>
+            <div class="col-md-2">
                 <div class="input-group has-validation mb-3">
                     <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
                     <input type="number" class="form-control" id="numeroTarima" name="numeroTarima"
@@ -45,7 +50,7 @@
                     <div class="invalid-feedback">Máximo 6 dígitos.</div>
                 </div>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-2">
                 <div class="input-group has-validation mb-3">
                     <span class="input-group-text"><i class="fas fa-user"></i></span>
                     <input type="number" class="form-control" id="numeroUsuario" name="numeroUsuario"
