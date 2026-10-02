@@ -20,6 +20,7 @@ import (
 	"gestion-ciclo-tres/internal/delivery/render"
 	"gestion-ciclo-tres/internal/identity"
 	"gestion-ciclo-tres/internal/infrastructure/sqlite"
+	"gestion-ciclo-tres/internal/producto"
 	"gestion-ciclo-tres/internal/tarima"
 )
 
@@ -141,9 +142,14 @@ func run(stop <-chan struct{}, cfg config.Config) error {
 
 	usuarioHandler := handlers.NewUsuarioHandler(renderer, authSvc, tarimaSvc, store)
 
+	productoHandler, err := newProductoHandler(ctx, renderer, db)
+	if err != nil {
+		return err
+	}
+
 	srv := &http.Server{
 		Addr:              cfg.Port,
-		Handler:           routes(db, store, authHandler, tarimaHandler, usuarioHandler),
+		Handler:           routes(db, store, authHandler, tarimaHandler, usuarioHandler, productoHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,
@@ -170,12 +176,31 @@ func run(stop <-chan struct{}, cfg config.Config) error {
 	}
 }
 
+// newProductoHandler carga el catálogo de productos en memoria y devuelve el
+// handler que lo consulta. Las migraciones ya garantizan que la tabla está
+// poblada, así que una carga vacía es un error de arranque.
+func newProductoHandler(ctx context.Context, renderer *render.Renderer, db *sql.DB) (*handlers.ProductoHandler, error) {
+	catalogo, err := producto.NewCatalogo(ctx, sqlite.NewProductoRepository(db))
+	if err != nil {
+		return nil, err
+	}
+
+	total := len(catalogo.Todos())
+	if total == 0 {
+		return nil, errors.New("catálogo de productos vacío (¿migración 0006_productos.sql aplicada?)")
+	}
+	slog.Info("catálogo de productos cargado", "productos", total)
+
+	return handlers.NewProductoHandler(renderer, catalogo), nil
+}
+
 func routes(
 	db *sql.DB,
 	store *middleware.SessionStore,
 	authHandler *handlers.AuthHandler,
 	tarimaHandler *handlers.TarimaHandler,
 	usuarioHandler *handlers.UsuarioHandler,
+	productoHandler *handlers.ProductoHandler,
 ) http.Handler {
 
 	mux := http.NewServeMux()
@@ -307,6 +332,17 @@ func routes(
 		requireNivel(
 			NivelSupervisor,
 			http.HandlerFunc(tarimaHandler.EliminarTarima),
+		),
+	)
+
+	// ============================================================
+	// PRODUCTOS
+	// ============================================================
+
+	mux.Handle("GET /productos/buscar",
+		requireNivel(
+			NivelProduccion,
+			http.HandlerFunc(productoHandler.Buscar),
 		),
 	)
 
