@@ -190,7 +190,10 @@ function autoFillFromBarcode(input) {
         var peso = document.getElementById('peso');
         var venta = document.getElementById('numeroVenta');
 
-        if(producto) producto.value = value.substring(1, 7);
+        if(producto) {
+            producto.value = value.substring(1, 7);
+            producto.dispatchEvent(new Event('change'));
+        }
         if (tarima) tarima.value = value.substring(7, 13);
         if (conservacion) conservacion.value = value.substring(17, 18);
         if (usuario) usuario.value = value.substring(18, 21);
