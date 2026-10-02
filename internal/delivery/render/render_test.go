@@ -1,6 +1,57 @@
 package render
 
-import "testing"
+import (
+	"io/fs"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
+	"testing"
+)
+
+// testTemplatesFS apunta a la raíz del repositorio, igual que el embed de main.go.
+func testTemplatesFS(t *testing.T) fs.FS {
+	t.Helper()
+	return os.DirFS(filepath.Join("..", "..", ".."))
+}
+
+func TestRenderPartial_PartialInvocaOtroPartial(t *testing.T) {
+	r, err := New(testTemplatesFS(t))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	r.RenderPartial(rec, "form_tarimas", map[string]any{
+		"CampoProducto": map[string]string{"Numero": "2", "Nombre": "SERVICIO EN SEGURIDAD E HIGIENE"},
+	}, 200)
+
+	body := rec.Body.String()
+	for _, want := range []string{`id="nombreProducto"`, "SERVICIO EN SEGURIDAD E HIGIENE", "readonly"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("el fragmento no contiene %q", want)
+		}
+	}
+}
+
+// El nombre del producto es informativo: sin name no viaja en el POST.
+func TestRenderPartial_CampoNombreProductoNoSeEnvia(t *testing.T) {
+	r, err := New(testTemplatesFS(t))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	rec := httptest.NewRecorder()
+	r.RenderPartial(rec, "campo_nombre_producto", map[string]string{"Numero": "111111"}, 200)
+
+	body := rec.Body.String()
+	if strings.Contains(body, `name="nombreProducto"`) {
+		t.Error("el campo de nombre de producto no debe tener atributo name")
+	}
+	if !strings.Contains(body, "Sin nombre asignado en el catálogo") {
+		t.Error("falta el placeholder para un producto sin nombre en el catálogo")
+	}
+}
 
 func TestFormatNumber(t *testing.T) {
 	cases := []struct {

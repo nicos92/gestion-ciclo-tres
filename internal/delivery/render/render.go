@@ -1,7 +1,6 @@
 package render
 
 import (
-	"embed"
 	"fmt"
 	"html/template"
 	"io/fs"
@@ -17,7 +16,7 @@ type Renderer struct {
 	funcMap   template.FuncMap
 }
 
-func New(fsys embed.FS) (*Renderer, error) {
+func New(fsys fs.FS) (*Renderer, error) {
 	funcMap := template.FuncMap{
 		"formatDate": func(t interface{}) string {
 			if t == nil {
@@ -133,17 +132,20 @@ func New(fsys embed.FS) (*Renderer, error) {
 	}
 
 	// Registrar los partials como templates standalone para RenderPartial
-	// (fragmentos htmx sin layout).
+	// (fragmentos htmx sin layout). Se concatenan todos los partials igual que
+	// en las páginas, para que un partial pueda invocar a otro.
 	for _, pe := range partialEntries {
 		if pe.IsDir() {
 			continue
 		}
 		name := strings.TrimSuffix(pe.Name(), ".html")
-		pc, err := fs.ReadFile(partialsDir, pe.Name())
-		if err != nil {
-			return nil, fmt.Errorf("read partial %s: %w", pe.Name(), err)
+
+		var combined string
+		for _, pc := range partialContents {
+			combined += "\n" + pc
 		}
-		t, err := template.New(name).Funcs(funcMap).Parse(string(pc))
+
+		t, err := template.New(name).Funcs(funcMap).Parse(combined)
 		if err != nil {
 			return nil, fmt.Errorf("parse partial %s: %w", pe.Name(), err)
 		}
