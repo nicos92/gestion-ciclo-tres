@@ -42,6 +42,7 @@ type Tarima struct {
 	Fecha          time.Time
 	Legajo         string
 	NombreUsuario  string
+	NombreProducto string
 }
 
 type TarimaEliminada struct {
@@ -62,6 +63,7 @@ type TarimaEliminada struct {
 	FechaEliminacion  time.Time
 	Legajo            string
 	NombreUsuario     string
+	NombreProducto    string
 }
 
 type FiltrosTarima struct {
