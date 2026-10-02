@@ -41,16 +41,41 @@ type historialPageData struct {
 }
 
 type tarimaFormData struct {
-	Title    string
-	AppName  string
-	Session  *middleware.SessionData
-	Tarima   *tarima.Tarima
-	Error    string
-	Success  string
-	EditMode bool
+	Title         string
+	AppName       string
+	Session       *middleware.SessionData
+	Tarima        *tarima.Tarima
+	Error         string
+	Success       string
+	EditMode      bool
+	CampoProducto *campoProductoData
 }
 
 const appName = "Gestión Ciclo Tres"
+
+// newFormData arma los datos del formulario de tarima, con el título derivado
+// del modo y el campo de producto precargado desde el modelo.
+func (h *TarimaHandler) newFormData(session *middleware.SessionData, t *tarima.Tarima, editMode bool) tarimaFormData {
+	title := "Nueva Tarima"
+	if editMode {
+		title = "Editar Tarima"
+	}
+
+	data := campoProductoData{}
+	if t != nil {
+		data.Numero = t.NumeroProducto
+		data.Nombre = t.NombreProducto
+	}
+
+	return tarimaFormData{
+		Title:         title,
+		AppName:       appName,
+		Session:       session,
+		Tarima:        t,
+		EditMode:      editMode,
+		CampoProducto: &data,
+	}
+}
 
 func (h *TarimaHandler) ListarTarimas(w http.ResponseWriter, r *http.Request) {
 	session := middleware.SessionFromContext(r)
@@ -93,13 +118,7 @@ func (h *TarimaHandler) ListarTarimasFragment(w http.ResponseWriter, r *http.Req
 
 func (h *TarimaHandler) ShowNuevaTarima(w http.ResponseWriter, r *http.Request) {
 	session := middleware.SessionFromContext(r)
-	data := tarimaFormData{
-		Title:    "Nueva Tarima",
-		AppName:  appName,
-		Session:  session,
-		EditMode: false,
-	}
-	h.renderer.Render(w, "nueva_tarima", data, http.StatusOK)
+	h.renderer.Render(w, "nueva_tarima", h.newFormData(session, nil, false), http.StatusOK)
 }
 
 func (h *TarimaHandler) GuardarTarima(w http.ResponseWriter, r *http.Request) {
@@ -160,13 +179,7 @@ func (h *TarimaHandler) ShowEditarTarima(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	data := tarimaFormData{
-		Title:    "Editar Tarima",
-		AppName:  appName,
-		Session:  session,
-		Tarima:   t,
-		EditMode: true,
-	}
+	data := h.newFormData(session, t, true)
 	h.renderer.Render(w, "editar_tarima", data, http.StatusOK)
 }
 
@@ -207,27 +220,15 @@ func (h *TarimaHandler) ActualizarTarima(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err := h.tarima.Update(r.Context(), &t); err != nil {
-		data := tarimaFormData{
-			Title:    "Editar Tarima",
-			AppName:  appName,
-			Session:  session,
-			Tarima:   &t,
-			Error:    tarimaErrorKey(err),
-			EditMode: true,
-		}
+		data := h.newFormData(session, &t, true)
+		data.Error = tarimaErrorKey(err)
 		h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 		return
 	}
 
 	updated, _ := h.tarima.GetByID(r.Context(), id)
-	data := tarimaFormData{
-		Title:    "Editar Tarima",
-		AppName:  appName,
-		Session:  session,
-		Tarima:   updated,
-		Success:  "updated",
-		EditMode: true,
-	}
+	data := h.newFormData(session, updated, true)
+	data.Success = "updated"
 	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 }
 
@@ -308,27 +309,17 @@ func (h *TarimaHandler) renderFormError(w http.ResponseWriter, session *middlewa
 	if key == "" {
 		key = fallbackErr
 	}
-	data := tarimaFormData{
-		Title:    "Nueva Tarima",
-		AppName:  appName,
-		Session:  session,
-		Tarima:   t,
-		Error:    key,
-		EditMode: editMode,
-	}
+	data := h.newFormData(session, t, editMode)
+	data.Error = key
 	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 }
 
 func (h *TarimaHandler) renderFormSuccess(w http.ResponseWriter, session *middleware.SessionData, successKey string, editMode bool) {
-	data := tarimaFormData{
-		Title:    "Nueva Tarima",
-		AppName:  appName,
-		Session:  session,
-		Success:  successKey,
-		EditMode: editMode,
-	}
-	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 	w.Header().Set("HX-Push-Url", "/tarimas/nueva")
+
+	data := h.newFormData(session, nil, editMode)
+	data.Success = successKey
+	h.renderer.RenderPartial(w, "form_tarimas", data, http.StatusOK)
 }
 
 func (h *TarimaHandler) loadTarimas(r *http.Request, filters tarima.FiltrosTarima, showAll bool) (*tarimasPageData, error) {
