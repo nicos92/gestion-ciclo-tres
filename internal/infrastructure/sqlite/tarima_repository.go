@@ -21,7 +21,7 @@ func NewTarimaRepository(db *sql.DB) *SQLiteTarimaRepository {
 const tarimaSelectCols = `
 	id, codigo_barras, numero_producto, numero_tarima, numero_usuario,
 	conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario,
-	fecha_registro, fecha, legajo, nombre_usuario`
+	fecha_registro, fecha, legajo, nombre_usuario, nombre_producto`
 
 func (r *SQLiteTarimaRepository) ListToday(ctx context.Context, limit int) ([]tarima.Tarima, error) {
 	query := `
@@ -89,7 +89,7 @@ func (r *SQLiteTarimaRepository) GetByID(ctx context.Context, id int64) (*tarima
 	err := row.Scan(
 		&t.ID, &t.CodigoBarras, &t.NumeroProducto, &t.NumeroTarima, &t.NumeroUsuario,
 		&t.Conservacion, &t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
-		&fechaRegistroStr, &fechaStr, &t.Legajo, &t.NombreUsuario,
+		&fechaRegistroStr, &fechaStr, &t.Legajo, &t.NombreUsuario, &t.NombreProducto,
 	)
 	if err != nil {
 		return nil, err
@@ -214,7 +214,7 @@ func (r *SQLiteTarimaRepository) queryTarimasArgs(ctx context.Context, query str
 		if err := rows.Scan(
 			&t.ID, &t.CodigoBarras, &t.NumeroProducto, &t.NumeroTarima, &t.NumeroUsuario,
 			&t.Conservacion, &t.CantidadCajas, &t.Peso, &t.NumeroVenta, &t.Descripcion, &idUsuario,
-			&fechaRegistroStr, &fechaStr, &t.Legajo, &t.NombreUsuario,
+			&fechaRegistroStr, &fechaStr, &t.Legajo, &t.NombreUsuario, &t.NombreProducto,
 		); err != nil {
 			return nil, fmt.Errorf("leer fila tarima: %w", err)
 		}
@@ -305,7 +305,7 @@ func parseSQLDate(s string) time.Time {
 const historialSelectCols = `
 	id, id_tarima_eliminada, codigo_barras, numero_producto, numero_tarima, numero_usuario,
 	conservacion, cantidad_cajas, peso, numero_venta, descripcion, id_usuario,
-	fecha_registro, fecha, fecha_eliminacion, legajo, nombre_usuario`
+	fecha_registro, fecha, fecha_eliminacion, legajo, nombre_usuario, nombre_producto`
 
 func (r *SQLiteTarimaRepository) ListHistorial(ctx context.Context, filters tarima.FiltrosHistorial, limit int) ([]tarima.TarimaEliminada, error) {
 	query, args := buildHistorialFilterQuery(filters, limit)
@@ -328,7 +328,7 @@ func (r *SQLiteTarimaRepository) queryHistorialEliminadas(ctx context.Context, q
 			&h.ID, &h.IDTarimaEliminada, &h.CodigoBarras, &h.NumeroProducto,
 			&h.NumeroTarima, &h.NumeroUsuario, &h.Conservacion, &h.CantidadCajas,
 			&h.Peso, &h.NumeroVenta, &h.Descripcion, &idUsuario,
-			&fechaRegistroStr, &fechaStr, &fechaElimStr, &h.Legajo, &h.NombreUsuario,
+			&fechaRegistroStr, &fechaStr, &fechaElimStr, &h.Legajo, &h.NombreUsuario, &h.NombreProducto,
 		); err != nil {
 			return nil, fmt.Errorf("leer fila historial: %w", err)
 		}

@@ -735,3 +735,80 @@ func TestListHistorial_FiltraPorFechaEliminacion(t *testing.T) {
 		t.Fatalf("ListHistorial por fecha = %d registros, se esperaba 1", len(eliminadas))
 	}
 }
+
+func TestNombreProducto_DesdeCatalogo(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
+	repo.insertTestTarima(ctx, t, "200000", "100001", "050", "1", 10, 100.5, "25-000020", nil, hoy)
+
+	tarimas, err := repo.ListAll(ctx, 1000)
+	if err != nil {
+		t.Fatalf("ListAll: %v", err)
+	}
+	if len(tarimas) != 1 {
+		t.Fatalf("ListAll = %d tarimas, se esperaba 1", len(tarimas))
+	}
+	if tarimas[0].NombreProducto != "SEBO DESPOSTADA" {
+		t.Errorf("NombreProducto = %q, want SEBO DESPOSTADA", tarimas[0].NombreProducto)
+	}
+
+	got, err := repo.GetByID(ctx, tarimas[0].ID)
+	if err != nil {
+		t.Fatalf("GetByID: %v", err)
+	}
+	if got.NombreProducto != "SEBO DESPOSTADA" {
+		t.Errorf("GetByID NombreProducto = %q, want SEBO DESPOSTADA", got.NombreProducto)
+	}
+}
+
+func TestNombreProducto_NoEnCatalogo(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	hoy := time.Now().UTC().Format("2006-01-02 15:04:05")
+	repo.insertTestTarima(ctx, t, "999998", "100002", "051", "1", 11, 101.5, "25-000021", nil, hoy)
+
+	tarimas, err := repo.ListAll(ctx, 1000)
+	if err != nil {
+		t.Fatalf("ListAll: %v", err)
+	}
+	if len(tarimas) != 1 {
+		t.Fatalf("ListAll = %d tarimas, se esperaba 1", len(tarimas))
+	}
+	if tarimas[0].NombreProducto != "" {
+		t.Errorf("NombreProducto = %q, se esperaba vacío", tarimas[0].NombreProducto)
+	}
+}
+
+func TestNombreProducto_EnHistorial(t *testing.T) {
+	ctx, repo := newTestTarimaRepo(t)
+
+	created := &tarima.Tarima{
+		CodigoBarras:   "020000000099981010004545000000",
+		NumeroProducto: "200000",
+		NumeroTarima:   "000999",
+		NumeroUsuario:  "010",
+		Conservacion:   "1",
+		CantidadCajas:  45,
+		Peso:           450.00,
+		NumeroVenta:    "25-123456",
+	}
+	id, err := repo.Create(ctx, created)
+	if err != nil {
+		t.Fatalf("Create: %v", err)
+	}
+	if _, err := repo.Delete(ctx, id); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+
+	eliminadas, err := repo.ListHistorial(ctx, tarima.FiltrosHistorial{}, 1000)
+	if err != nil {
+		t.Fatalf("ListHistorial: %v", err)
+	}
+	if len(eliminadas) != 1 {
+		t.Fatalf("ListHistorial = %d registros, se esperaba 1", len(eliminadas))
+	}
+	if eliminadas[0].NombreProducto != "SEBO DESPOSTADA" {
+		t.Errorf("historial NombreProducto = %q, want SEBO DESPOSTADA", eliminadas[0].NombreProducto)
+	}
+}

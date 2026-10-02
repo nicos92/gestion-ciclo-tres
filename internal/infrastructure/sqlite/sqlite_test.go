@@ -69,11 +69,11 @@ func TestMigrateAppliesMigrations(t *testing.T) {
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations`).Scan(&versionCount); err != nil {
 		t.Fatalf("contar versiones: %v", err)
 	}
-	if versionCount != 5 {
-		t.Errorf("versiones aplicadas = %d, se esperaban 5", versionCount)
+	if versionCount != 7 {
+		t.Errorf("versiones aplicadas = %d, se esperaban 7", versionCount)
 	}
 
-	for _, table := range []string{"roles", "usuarios", "tarimas", "historial_tarimas"} {
+	for _, table := range []string{"roles", "usuarios", "tarimas", "historial_tarimas", "productos"} {
 		var n int
 		if err := db.QueryRowContext(ctx,
 			`SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?`, table).Scan(&n); err != nil {
@@ -118,6 +118,14 @@ func TestMigrateAppliesMigrations(t *testing.T) {
 	if roles != 4 {
 		t.Errorf("roles = %d, se esperaban 4", roles)
 	}
+
+	var productos int
+	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM productos`).Scan(&productos); err != nil {
+		t.Fatalf("contar productos: %v", err)
+	}
+	if productos != 670 {
+		t.Errorf("productos = %d, se esperaban 670", productos)
+	}
 }
 
 func TestMigrateIdempotent(t *testing.T) {
@@ -136,7 +144,7 @@ func TestMigrateIdempotent(t *testing.T) {
 	if err := db.QueryRowContext(ctx, `SELECT COUNT(*) FROM schema_migrations`).Scan(&count); err != nil {
 		t.Fatalf("contar versiones: %v", err)
 	}
-	if count != 5 {
-		t.Errorf("versiones = %d tras re-ejecutar, se esperaban 5", count)
+	if count != 7 {
+		t.Errorf("versiones = %d tras re-ejecutar, se esperaban 7", count)
 	}
 }
