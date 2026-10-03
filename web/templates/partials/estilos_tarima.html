@@ -1,0 +1,33 @@
+{{define "estilos_tarima"}}
+<style>
+    .btn-focus-animation {
+        transition: box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .btn-focus-animation:focus {
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 15px rgba(13, 110, 253, 0.5) !important;
+        outline: none;
+    }
+    .btn-focus-animation:hover {
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 15px rgba(13, 110, 253, 0.5);
+    }
+    .btn-focus-animation:active {
+        box-shadow:
+            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
+            0 0 8px rgba(13, 110, 253, 0.7) !important;
+    }
+
+    /* El formulario de tarimas usa input-group-sm para el padding; acá se baja
+       un escalón la fuente para que entre completo en pantallas de 1366px. */
+    #form-container .form-control,
+    #form-container .input-group-text,
+    #form-container .invalid-feedback {
+        font-size: 0.8125rem;
+    }
+</style>
+{{end}}
