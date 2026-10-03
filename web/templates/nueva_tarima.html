@@ -1,39 +1,15 @@
-{{define "styles"}}
-<style>
-    .btn-focus-animation {
-        transition: box-shadow 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    .btn-focus-animation:focus {
-        box-shadow:
-            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
-            0 0 15px rgba(13, 110, 253, 0.5) !important;
-        outline: none;
-    }
-    .btn-focus-animation:hover {
-        box-shadow:
-            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
-            0 0 15px rgba(13, 110, 253, 0.5);
-    }
-    .btn-focus-animation:active {
-        box-shadow:
-            0 0 0 0.5rem rgba(13, 110, 253, 0.25),
-            0 0 8px rgba(13, 110, 253, 0.7) !important;
-    }
-</style>
-{{end}} {{define "content"}}
+{{define "styles"}}{{template "estilos_tarima" .}}{{end}} {{define "content"}}
 <div class="container my-2">
     <div class="row justify-content-center">
         <div class="col-lg-10">
             <div class="card">
-                <div class="card-header d-flex flex-column align-items-start no-print">
-                    <h3 class="mb-3">Formulario de Nueva Tarima</h3>
-                    <p class="text-muted">
+                <div class="card-header d-flex flex-wrap align-items-baseline gap-2 no-print">
+                    <h5 class="mb-0">Formulario de Nueva Tarima</h5>
+                    <small class="text-muted">
                         Complete los campos para registrar una nueva tarima
-                    </p>
+                    </small>
                 </div>
-                <div class="card-body">{{template "form_tarimas" .}}</div>
+                <div class="card-body p-3">{{template "form_tarimas" .}}</div>
             </div>
         </div>
     </div>
