@@ -1,5 +1,131 @@
 {{define "tabla_tarimas"}}
 <div id="tabla-tarimas" class="card-body">
+    <style>
+        @media print {
+            @page {
+                size: A4;
+                margin: 10mm;
+            }
+
+            body * {
+                visibility: hidden !important;
+            }
+
+            .container.my-3,
+            .container.my-3 * {
+                visibility: visible !important;
+            }
+
+            body {
+                background: #fff;
+                margin: 0;
+                padding: 0;
+            }
+
+            .container.my-3 {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .card,
+            .card-body {
+                box-shadow: none !important;
+                border: none !important;
+                background: #fff !important;
+                padding: 0 !important;
+                width: 100% !important;
+                position: static !important;
+            }
+
+            /* Oculta todo lo que no sea la lista: header, formulario, alert, vista card, contador */
+            .no-print,
+            .no-print *,
+            .alert,
+            .d-xl-none,
+            #count-mostradas,
+            .btn,
+            button {
+                display: none !important;
+            }
+
+            /* Forzar vista tabla (al imprimir el ancho es < xl y Bootstrap la oculta) */
+            .table-responsive.d-none.d-xl-block {
+                display: block !important;
+                overflow: visible !important;
+                width: 100% !important;
+            }
+
+            /* Filtros aplicados: debe vencer al display:none en línea */
+            .print-filters {
+                display: block !important;
+                visibility: visible;
+                position: static;
+                font-size: 8pt;
+                margin: 0 0 6px 0;
+                padding: 6px;
+                border: 1px solid #000;
+                background: #f9f9f9;
+                width: 100% !important;
+            }
+
+            .print-filters h4 {
+                margin: 0 0 6px 0;
+                font-size: 9pt;
+                border-bottom: 1px solid #000;
+                padding-bottom: 4px;
+            }
+
+            .print-filters ul {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+            }
+
+            .print-filters li {
+                margin: 2px 0;
+            }
+
+            table {
+                width: 100% !important;
+                min-width: 100% !important;
+                border-collapse: collapse;
+                font-size: 8pt;
+                table-layout: auto;
+                page-break-inside: auto;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            thead tr {
+                background-color: #667eea !important;
+                color: #fff !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            th,
+            td {
+                border: 1px solid #000 !important;
+                padding: 5px 4px !important;
+                text-align: left;
+                word-wrap: break-word;
+                vertical-align: top;
+                width: auto !important;
+            }
+        }
+    </style>
 
     {{if .Filters.HasFilters}}
     <div class="print-filters" style="display: none;">
@@ -40,7 +166,7 @@
                     <th>Nombre</th>
                     <th>Fecha</th>
                     <th>Descripción</th>
-                    {{if and $.Session (ge $.Session.Nivel 2)}}<th>Acciones</th>{{end}}
+                    {{if and $.Session (ge $.Session.Nivel 2)}}<th class="no-print">Acciones</th>{{end}}
                 </tr>
             </thead>
             <tbody>
@@ -58,7 +184,7 @@
                     <td>{{formatDate .FechaRegistro}}</td>
                     <td>{{if .Descripcion}}{{.Descripcion}}{{else}}&nbsp;{{end}}</td>
                     {{if and $.Session (ge $.Session.Nivel 2)}}
-                    <td class="text-nowrap">
+                    <td class="text-nowrap no-print">
                         <a href="/tarimas/editar/{{.ID}}" class="btn btn-outline-warning btn-sm me-1"
                            title="Editar tarima">
                             <i class="fas fa-edit"></i>
